@@ -1,4 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright © 2015 Erik De Rijcke
+  ~ Copyright © 2024 Casey Link
+  ~
+  ~ Licensed under the Apache License,Version2.0(the"License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,software
+  ~ distributed under the License is distributed on an"AS IS"BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  ~
+  -->
+
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
@@ -47,12 +66,11 @@
     </scm>
 
     <modules>
+        <module>jextract</module>
         <module>stubs-shared</module>
         <module>stubs-server</module>
         <module>stubs-client</module>
-
-        <module>generator</module>
-
+        <module>wayland-scanner</module>
         <module>wayland-client</module>
         <module>wayland-server</module>
     </modules>
@@ -75,8 +93,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.5</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>22</source>
+                    <target>22</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -97,7 +115,7 @@
         <profile>
             <id>disable-java8-doclint</id>
             <activation>
-                <jdk>[1.8,)</jdk>
+                <jdk>[22,)</jdk>
             </activation>
             <properties>
                 <additionalparam>-Xdoclint:none</additionalparam>
