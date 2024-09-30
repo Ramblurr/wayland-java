@@ -11,9 +11,10 @@
 //WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
 //See the License for the specific language governing permissions and
 //limitations under the License.
-@Protocols(@Protocol(path = "/usr/share/wayland/wayland.xml",
-                     generateClient = false,
-                     generateServer = true))
+@Protocols(@Protocol(path = "wayland.xml",
+        pkgConfig = "wayland-scanner",
+        generateClient = false,
+        generateServer = true))
 package org.freedesktop.wayland;
 
 import org.freedesktop.wayland.generator.api.Protocol;
