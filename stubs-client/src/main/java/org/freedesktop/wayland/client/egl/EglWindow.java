@@ -1,45 +1,52 @@
-//Copyright 2015 Erik De Rijcke
-//
-//Licensed under the Apache License,Version2.0(the"License");
-//you may not use this file except in compliance with the License.
-//You may obtain a copy of the License at
-//
-//http://www.apache.org/licenses/LICENSE-2.0
-//
-//Unless required by applicable law or agreed to in writing,software
-//distributed under the License is distributed on an"AS IS"BASIS,
-//WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
-//See the License for the specific language governing permissions and
-//limitations under the License.
+/*
+ * Copyright © 2015 Erik De Rijcke
+ * Copyright © 2024 Casey Link
+ *
+ * Licensed under the Apache License,Version2.0(the"License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,software
+ * distributed under the License is distributed on an"AS IS"BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ */
 package org.freedesktop.wayland.client.egl;
 
-import org.freedesktop.jaccall.Pointer;
 import org.freedesktop.wayland.client.Proxy;
-import org.freedesktop.wayland.client.egl.jaccall.WaylandEglCore;
 import org.freedesktop.wayland.util.ObjectCache;
 
-import static org.freedesktop.jaccall.Pointer.nref;
+import java.lang.foreign.MemorySegment;
+import java.util.Objects;
+
 
 public class EglWindow {
 
-    public final long pointer;
+    public final MemorySegment pointer;
 
-    protected EglWindow(final long pointer) {
+    protected EglWindow(final MemorySegment pointer) {
         this.pointer = pointer;
-        ObjectCache.store(this.pointer,
-                          this);
+        ObjectCache.store(this.pointer, this);
     }
 
     public static EglWindow create(final Proxy<?> wlSurfaceProxy,
                                    final int width,
                                    final int height) {
-        return EglWindow.get(WaylandEglCore.INSTANCE()
-                                           .wl_egl_window_create(wlSurfaceProxy.pointer,
-                                                                 width,
-                                                                 height));
+        // TODO implement when we jextract the egl header
+//        return EglWindow.get(
+//                C.wl_egl_window_create(wlSurfaceProxy.pointer,
+//                        width,
+//                        height)
+//        );
+        throw new UnsupportedOperationException("TODO implement");
     }
 
-    public static EglWindow get(final long pointer) {
+    public static EglWindow get(final MemorySegment pointer) {
         EglWindow eglWindow = ObjectCache.from(pointer);
         if (eglWindow == null) {
             eglWindow = new EglWindow(pointer);
@@ -51,91 +58,50 @@ public class EglWindow {
                        final int height,
                        final int dx,
                        final int dy) {
-        WaylandEglCore.INSTANCE()
-                      .wl_egl_window_resize(this.pointer,
-                                            width,
-                                            height,
-                                            dx,
-                                            dy);
+        /*
+        C.wl_egl_window_resize(this.pointer,
+                width,
+                height,
+                dx,
+                dy);
+
+         */
+        // TODO uncomment when egl
     }
 
     public Size getAttachedSize() {
-        final Pointer<Integer> x = nref(0);
-        final Pointer<Integer> y = nref(0);
-
-        WaylandEglCore.INSTANCE()
-                      .wl_egl_window_get_attached_size(this.pointer,
-                                                       x.address,
-                                                       y.address);
-        return new Size(x.get(),
-                        y.get());
+        /*
+        try (Arena arena = Arena.ofAuto()) {
+            final var x = arena.allocateFrom(C.C_INT);
+            final var y = arena.allocateFrom(C.C_INT);
+            C.wl_egl_window_get_attached_size(this.pointer,
+                    x,
+                    y
+            );
+            return new Size(x.get(C.C_INT, 0), y.get(C.C_INT, 0));
+        }
+         */
+        // TODO uncomment and test once egl is added
+        throw new UnsupportedOperationException("TODO implement");
     }
 
     public void destroy() {
-        WaylandEglCore.INSTANCE()
-                      .wl_egl_window_destroy(this.pointer);
+        // TODO uncomment egl C.wl_egl_window_destroy(this.pointer);
         ObjectCache.remove(this.pointer);
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof EglWindow)) {
-            return false;
-        }
-
-        final EglWindow eglWindow = (EglWindow) o;
-
-        return this.pointer == eglWindow.pointer;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof EglWindow eglWindow)) return false;
+        return Objects.equals(pointer, eglWindow.pointer);
     }
 
     @Override
     public int hashCode() {
-        return new Long(this.pointer).hashCode();
+        return Objects.hashCode(pointer);
     }
 
-    public static final class Size {
-
-        private final int width;
-        private final int height;
-
-        Size(final int width,
-             final int height) {
-            this.width = width;
-            this.height = height;
-        }
-
-        public int getWidth() {
-            return this.width;
-        }
-
-        public int getHeight() {
-            return this.height;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = this.width;
-            result = 31 * result + this.height;
-            return result;
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-
-            final Size size = (Size) o;
-
-            return this.height == size.height && this.width == size.width;
-        }
-
-
+    public record Size(int width, int height) {
     }
 }

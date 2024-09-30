@@ -1,20 +1,27 @@
-//Copyright 2015 Erik De Rijcke
-//
-//Licensed under the Apache License,Version2.0(the"License");
-//you may not use this file except in compliance with the License.
-//You may obtain a copy of the License at
-//
-//http://www.apache.org/licenses/LICENSE-2.0
-//
-//Unless required by applicable law or agreed to in writing,software
-//distributed under the License is distributed on an"AS IS"BASIS,
-//WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
-//See the License for the specific language governing permissions and
-//limitations under the License.
+/*
+ * Copyright © 2015 Erik De Rijcke
+ * Copyright © 2024 Casey Link
+ *
+ * Licensed under the Apache License,Version2.0(the"License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,software
+ * distributed under the License is distributed on an"AS IS"BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ */
 package org.freedesktop.wayland.client;
 
-import org.freedesktop.wayland.client.jaccall.WaylandClientCore;
+import org.freedesktop.wayland.C;
 import org.freedesktop.wayland.util.ObjectCache;
+
+import java.lang.foreign.MemorySegment;
 
 /**
  * A queue for {@link Proxy} object events.
@@ -25,15 +32,14 @@ import org.freedesktop.wayland.util.ObjectCache;
  * @see Display
  */
 public class EventQueue {
-    public final Long pointer;
+    public final MemorySegment pointer;
 
-    protected EventQueue(final Long pointer) {
+    protected EventQueue(final MemorySegment pointer) {
         this.pointer = pointer;
-        ObjectCache.store(this.pointer,
-                          this);
+        ObjectCache.store(this.pointer, this);
     }
 
-    public static EventQueue get(final long pointer) {
+    public static EventQueue get(final MemorySegment pointer) {
         EventQueue eventQueue = ObjectCache.from(pointer);
         if (eventQueue == null) {
             eventQueue = new EventQueue(pointer);
@@ -71,8 +77,7 @@ public class EventQueue {
      * this function.
      */
     public void destroy() {
-        WaylandClientCore.INSTANCE()
-                         .wl_event_queue_destroy(this.pointer);
+        C.wl_event_queue_destroy(this.pointer);
         ObjectCache.remove(this.pointer);
     }
 }

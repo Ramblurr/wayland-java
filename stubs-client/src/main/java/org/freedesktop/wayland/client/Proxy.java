@@ -1,26 +1,27 @@
-//Copyright 2015 Erik De Rijcke
-//
-//Licensed under the Apache License,Version2.0(the"License");
-//you may not use this file except in compliance with the License.
-//You may obtain a copy of the License at
-//
-//http://www.apache.org/licenses/LICENSE-2.0
-//
-//Unless required by applicable law or agreed to in writing,software
-//distributed under the License is distributed on an"AS IS"BASIS,
-//WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
-//See the License for the specific language governing permissions and
-//limitations under the License.
+/*
+ * Copyright © 2015 Erik De Rijcke
+ * Copyright © 2024 Casey Link
+ *
+ * Licensed under the Apache License,Version2.0(the"License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,software
+ * distributed under the License is distributed on an"AS IS"BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ */
 package org.freedesktop.wayland.client;
 
-import org.freedesktop.jaccall.Pointer;
-import org.freedesktop.wayland.client.jaccall.WaylandClientCore;
-import org.freedesktop.wayland.util.Arguments;
-import org.freedesktop.wayland.util.Dispatcher;
-import org.freedesktop.wayland.util.InterfaceMeta;
-import org.freedesktop.wayland.util.ObjectCache;
-import org.freedesktop.wayland.util.WaylandObject;
+import org.freedesktop.wayland.C;
+import org.freedesktop.wayland.util.*;
 
+import java.lang.foreign.MemorySegment;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
@@ -47,16 +48,16 @@ public abstract class Proxy<I> implements WaylandObject {
 
     private static final Map<Class<? extends Proxy<?>>, Constructor<? extends Proxy<?>>> PROXY_CONSTRUCTORS = new HashMap<>();
 
-    public final Long pointer;
+    public final MemorySegment pointer;
 
-    private final int             version;
-    private final I               implementation;
-    private final Pointer<Object> jObjectPointer;
+    private final int version;
+    private final I implementation;
+    private final MemorySegment jObjectRef;
 
-    protected Proxy(final long pointer) {
+    protected Proxy(final MemorySegment pointer) {
         this(pointer,
-             null,
-             99);
+                null,
+                99);
     }
 
     /**
@@ -64,24 +65,24 @@ public abstract class Proxy<I> implements WaylandObject {
      * @param implementation The listener to be added to proxy
      * @param version
      */
-    protected Proxy(final Long pointer,
+    protected Proxy(final MemorySegment pointer,
                     final I implementation,
                     final int version) {
         this.pointer = pointer;
         this.implementation = implementation;
         this.version = version;
         ObjectCache.store(this.pointer,
-                          this);
-        this.jObjectPointer = Pointer.from(this);
+                this);
+        this.jObjectRef = GlobalRef.from(this);
 
         //Special casing implementation. For some proxies the underlying native library provides its own implementation.
         //We pass in a null implementation in those cases. (Eg Display proxy).
         if (implementation != null) {
-            WaylandClientCore.INSTANCE()
-                             .wl_proxy_add_dispatcher(this.pointer,
-                                                      Dispatcher.INSTANCE.address,
-                                                      jObjectPointer.address,
-                                                      0L);
+            C.wl_proxy_add_dispatcher(this.pointer,
+                    Dispatcher.INSTANCE,
+                    jObjectRef,
+                    MemorySegment.NULL
+            );
         }
     }
 
@@ -102,26 +103,25 @@ public abstract class Proxy<I> implements WaylandObject {
      */
     protected void marshal(final int opcode,
                            final Arguments args) {
-        WaylandClientCore.INSTANCE()
-                         .wl_proxy_marshal_array(this.pointer,
-                                                 opcode,
-                                                 args.pointer.address);
-        args.pointer.close();
+        C.wl_proxy_marshal_array(this.pointer,
+                opcode,
+                args.pointer);
+        // TODO cleanup args.pointer!
+//        args.pointer.close();
     }
 
     /**
      * @param opcode Opcode of the request to be sent
-     *
      * @see {@link #marshal(int, Arguments)}
      */
     protected void marshal(final int opcode) {
-        WaylandClientCore.INSTANCE()
-                         .wl_proxy_marshal_array(this.pointer,
-                                                 opcode,
-                                                 0L);
+        C.wl_proxy_marshal_array(this.pointer,
+                opcode,
+                MemorySegment.NULL
+        );
     }
 
-    //called from generated proxies
+    // called from generated proxies
 
     /**
      * Prepare a request to be sent to the compositor
@@ -143,7 +143,6 @@ public abstract class Proxy<I> implements WaylandObject {
      * @param args           Extra arguments for the given request
      * @param <J>            implementation Type
      * @param <T>            proxy Type
-     *
      * @return a new proxy
      */
     protected <J, T extends Proxy<J>> T marshalConstructor(final int opcode,
@@ -152,11 +151,13 @@ public abstract class Proxy<I> implements WaylandObject {
                                                            final Class<T> newProxyCls,
                                                            final Arguments args) {
         final T t = marshalConstructor(opcode,
-                                       implementation,
-                                       version,
-                                       newProxyCls,
-                                       args.pointer.address);
-        args.pointer.close();
+                implementation,
+                version,
+                newProxyCls,
+                args.pointer);
+
+        // TODO cleanup args.pointer!
+//        args.pointer.close();
         return t;
     }
 
@@ -165,46 +166,44 @@ public abstract class Proxy<I> implements WaylandObject {
                                                          final J implementation,
                                                          final int version,
                                                          final Class<T> newProxyCls,
-                                                         final long argsPointer) {
+                                                         final MemorySegment argsPointer) {
         try {
-            final long wlProxy = WaylandClientCore.INSTANCE()
-                                                  .wl_proxy_marshal_array_constructor(this.pointer,
-                                                                                      opcode,
-                                                                                      argsPointer,
-                                                                                      InterfaceMeta.get(newProxyCls).pointer.address);
+            final var wlProxy = C.wl_proxy_marshal_array_constructor(this.pointer,
+                    opcode,
+                    argsPointer,
+                    InterfaceMeta.get(newProxyCls).wlInterfacePointer);
             return marshalProxy(wlProxy,
-                                implementation,
-                                version,
-                                newProxyCls);
-        }
-        catch (final NoSuchMethodException |
-                IllegalAccessException |
-                InstantiationException |
-                InvocationTargetException e) {
+                    implementation,
+                    version,
+                    newProxyCls);
+        } catch (final NoSuchMethodException |
+                       IllegalAccessException |
+                       InstantiationException |
+                       InvocationTargetException e) {
             throw new RuntimeException("Uh oh, this is a bug!",
-                                       e);
+                    e);
         }
     }
 
-    private <J, T extends Proxy<J>> T marshalProxy(final long pointer,
+    private <J, T extends Proxy<J>> T marshalProxy(final MemorySegment pointer,
                                                    final J implementation,
                                                    final int version,
                                                    final Class<T> newProxyCls) throws NoSuchMethodException,
-                                                                                      IllegalAccessException,
-                                                                                      InvocationTargetException,
-                                                                                      InstantiationException {
+            IllegalAccessException,
+            InvocationTargetException,
+            InstantiationException {
         Constructor<? extends Proxy<?>> proxyConstructor = PROXY_CONSTRUCTORS.get(newProxyCls);
         if (proxyConstructor == null) {
             proxyConstructor = findMatchingConstructor(newProxyCls,
-                                                       long.class,
-                                                       implementation.getClass(),
-                                                       int.class);
+                    long.class,
+                    implementation.getClass(),
+                    int.class);
             PROXY_CONSTRUCTORS.put(newProxyCls,
-                                   proxyConstructor);
+                    proxyConstructor);
         }
         return (T) proxyConstructor.newInstance(pointer,
-                                                implementation,
-                                                version);
+                implementation,
+                version);
     }
 
     private <J, T extends Proxy<J>> Constructor<T> findMatchingConstructor(final Class<T> newProxyCls,
@@ -217,8 +216,8 @@ public abstract class Proxy<I> implements WaylandObject {
                 continue;
             }
             if (parameterTypes[0].isAssignableFrom(pointerClass) &&
-                parameterTypes[1].isAssignableFrom(implementationClass) &&
-                parameterTypes[2].isAssignableFrom(intClass)) {
+                    parameterTypes[1].isAssignableFrom(implementationClass) &&
+                    parameterTypes[2].isAssignableFrom(intClass)) {
                 return (Constructor<T>) constructor;
             }
         }
@@ -245,8 +244,7 @@ public abstract class Proxy<I> implements WaylandObject {
      * @return The id the object associated with the proxy
      */
     public int getId() {
-        return WaylandClientCore.INSTANCE()
-                                .wl_proxy_get_id(this.pointer);
+        return C.wl_proxy_get_id(this.pointer);
     }
 
     public int getVersion() {
@@ -260,13 +258,10 @@ public abstract class Proxy<I> implements WaylandObject {
      * queued in {@code queue} instead of the display's main queue.
      *
      * @param queue The event queue that will handle this proxy
-     *
      * @see Display#dispatchQueue(EventQueue)
      */
     public void setQueue(final EventQueue queue) {
-        WaylandClientCore.INSTANCE()
-                         .wl_proxy_set_queue(this.pointer,
-                                             queue.pointer);
+        C.wl_proxy_set_queue(this.pointer, queue.pointer);
     }
 
     @Override
@@ -292,13 +287,12 @@ public abstract class Proxy<I> implements WaylandObject {
      * Destroy a proxy object
      */
     public void destroy() {
-        WaylandClientCore.INSTANCE()
-                         .wl_proxy_destroy(this.pointer);
+        C.wl_proxy_destroy(this.pointer);
         ObjectCache.remove(this.pointer);
-        this.jObjectPointer.close();
+        GlobalRef.remove(jObjectRef);
     }
 
-    public Long getPointer() {
+    public MemorySegment getPointer() {
         return this.pointer;
     }
 }

@@ -1,19 +1,26 @@
-//Copyright 2015 Erik De Rijcke
-//
-//Licensed under the Apache License,Version2.0(the"License");
-//you may not use this file except in compliance with the License.
-//You may obtain a copy of the License at
-//
-//http://www.apache.org/licenses/LICENSE-2.0
-//
-//Unless required by applicable law or agreed to in writing,software
-//distributed under the License is distributed on an"AS IS"BASIS,
-//WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
-//See the License for the specific language governing permissions and
-//limitations under the License.
+/*
+ * Copyright © 2015 Erik De Rijcke
+ * Copyright © 2024 Casey Link
+ *
+ * Licensed under the Apache License,Version2.0(the"License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,software
+ * distributed under the License is distributed on an"AS IS"BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ */
 package org.freedesktop.wayland.client;
 
-import org.freedesktop.wayland.client.jaccall.WaylandClientCore;
+import org.freedesktop.wayland.C;
+
+import java.lang.foreign.MemorySegment;
 
 /**
  * Represents a connection to the compositor and acts as a proxy to
@@ -77,10 +84,10 @@ public abstract class Display extends Proxy<Void> {
 
     public static final int OBJECT_ID = 1;
 
-    protected Display(final Long pointer) {
+    protected Display(final MemorySegment pointer) {
         super(pointer,
-              null,
-              1);
+                null,
+                1);
     }
 
     /**
@@ -90,8 +97,7 @@ public abstract class Display extends Proxy<Void> {
      * with it.
      */
     public void disconnect() {
-        WaylandClientCore.INSTANCE()
-                         .wl_display_disconnect(this.pointer);
+        C.wl_display_disconnect(this.pointer);
     }
 
     /**
@@ -103,8 +109,7 @@ public abstract class Display extends Proxy<Void> {
      * @return Display object file descriptor
      */
     public int getFD() {
-        return WaylandClientCore.INSTANCE()
-                                .wl_display_get_fd(this.pointer);
+        return C.wl_display_get_fd(this.pointer);
     }
 
     /**
@@ -124,13 +129,11 @@ public abstract class Display extends Proxy<Void> {
      * thread acquired it using wl_display_acquire_fd().
      *
      * @return The number of dispatched events on success or -1 on failure
-     *
      * @see #dispatchPending()
      * @see #dispatchQueue(EventQueue)
      */
     public int dispatch() {
-        return WaylandClientCore.INSTANCE()
-                                .wl_display_dispatch(this.pointer);
+        return C.wl_display_dispatch(this.pointer);
     }
 
     /**
@@ -165,14 +168,12 @@ public abstract class Display extends Proxy<Void> {
      * Calling this makes the current thread the main one.
      *
      * @return The number of dispatched events or -1 on failure
-     *
      * @see #dispatch()
      * @see #dispatchQueue(EventQueue)
      * @see #flush()
      */
     public int dispatchPending() {
-        return WaylandClientCore.INSTANCE()
-                                .wl_display_dispatch_pending(this.pointer);
+        return C.wl_display_dispatch_pending(this.pointer);
     }
 
     /**
@@ -187,13 +188,11 @@ public abstract class Display extends Proxy<Void> {
      * passed as argument.
      *
      * @param queue The event queue to dispatch
-     *
      * @return The number of dispatched events on success or -1 on failure
      */
     public int dispatchQueue(final EventQueue queue) {
-        return WaylandClientCore.INSTANCE()
-                                .wl_display_dispatch_queue(this.pointer,
-                                                           queue.pointer);
+        return C.wl_display_dispatch_queue(this.pointer,
+                queue.pointer);
     }
 
     /**
@@ -204,15 +203,12 @@ public abstract class Display extends Proxy<Void> {
      * If there are no events queued, this function returns immediately.
      *
      * @param queue The event queue to dispatch
-     *
      * @return The number of dispatched events on success or -1 on failure
-     *
      * @since 1.0.2
      */
     public int dispatchQueuePending(final EventQueue queue) {
-        return WaylandClientCore.INSTANCE()
-                                .wl_display_dispatch_queue_pending(this.pointer,
-                                                                   queue.pointer);
+        return C.wl_display_dispatch_queue_pending(this.pointer,
+                queue.pointer);
     }
 
     /**
@@ -231,8 +227,7 @@ public abstract class Display extends Proxy<Void> {
      * @return The number of bytes sent on success or -1 on failure
      */
     public int flush() {
-        return WaylandClientCore.INSTANCE()
-                                .wl_display_flush(this.pointer);
+        return C.wl_display_flush(this.pointer);
     }
 
     /**
@@ -244,8 +239,7 @@ public abstract class Display extends Proxy<Void> {
      * @return The number of dispatched events on success or -1 on failure
      */
     public int roundtrip() {
-        return WaylandClientCore.INSTANCE()
-                                .wl_display_roundtrip(this.pointer);
+        return C.wl_display_roundtrip(this.pointer);
     }
 
     /**
@@ -256,8 +250,7 @@ public abstract class Display extends Proxy<Void> {
      * failure.
      */
     public EventQueue createQueue() {
-        return new EventQueue(WaylandClientCore.INSTANCE()
-                                               .wl_display_create_queue(this.pointer));
+        return new EventQueue(C.wl_display_create_queue(this.pointer));
     }
 
     /**
@@ -272,14 +265,11 @@ public abstract class Display extends Proxy<Void> {
      * @return The last error that occurred on display or 0 if no error occurred
      */
     public int getError() {
-        return WaylandClientCore.INSTANCE()
-                                .wl_display_get_error(this.pointer);
+        return C.wl_display_get_error(this.pointer);
     }
 
     public int prepareReadQueue(final EventQueue queue) {
-        return WaylandClientCore.INSTANCE()
-                                .wl_display_prepare_read_queue(this.pointer,
-                                                               queue.pointer);
+        return C.wl_display_prepare_read_queue(this.pointer, queue.pointer);
     }
 
     /**
@@ -350,8 +340,7 @@ public abstract class Display extends Proxy<Void> {
      * @return 0 on success or -1 if event queue was not empty
      */
     public int prepareRead() {
-        return WaylandClientCore.INSTANCE()
-                                .wl_display_prepare_read(this.pointer);
+        return C.wl_display_prepare_read(this.pointer);
     }
 
     /**
@@ -362,8 +351,7 @@ public abstract class Display extends Proxy<Void> {
      * to read from the fd anytime soon.
      */
     public void cancelRead() {
-        WaylandClientCore.INSTANCE()
-                         .wl_display_cancel_read(this.pointer);
+        C.wl_display_cancel_read(this.pointer);
     }
 
     /**
@@ -384,8 +372,7 @@ public abstract class Display extends Proxy<Void> {
      * be set accordingly
      */
     public int readEvents() {
-        return WaylandClientCore.INSTANCE()
-                                .wl_display_read_events(this.pointer);
+        return C.wl_display_read_events(this.pointer);
     }
 }
 
