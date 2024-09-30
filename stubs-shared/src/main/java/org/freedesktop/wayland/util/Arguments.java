@@ -36,10 +36,12 @@ public class Arguments {
         this.pointer = pointer;
     }
 
-//    public static Arguments create(final int size) {
-//        return new Arguments(malloc(size * wl_argument.SIZE,
-//                                    wl_argument.class));
-//    }
+    public static Arguments create(final int size) {
+        return new Arguments(
+                // TODO audit arena
+                wl_argument.allocateArray(size, Memory.ARENA_AUTO)
+        );
+    }
 
     private MemorySegment getAt(final int index) {
         return wl_argument.asSlice(pointer, index);

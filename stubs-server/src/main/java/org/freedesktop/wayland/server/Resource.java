@@ -79,24 +79,23 @@ public abstract class Resource<I> implements WaylandObject {
     // TODO wl_resource_queue_event_array
     // TODO wl_resource_queue_event
 
-//    protected Resource(final Long pointer) {
-//        this.jObjectRef = Pointer.from(this);
-//        this.pointer = pointer;
-//        this.implementation = null;
-//        addDestroyListener(new Listener() {
-//            @Override
-//            public void handle() {
-//                notifyDestroyListeners();
-//                Resource.this.destroyListeners.clear();
-//                ObjectCache.remove(Resource.this.pointer);
-//                Resource.this.jObjectRef.close();
-//
-//                free();
-//            }
-//        });
-//        ObjectCache.store(pointer,
-//                this);
-//    }
+    protected Resource(final MemorySegment pointer) {
+        this.jObjectRef = GlobalRef.from(this);
+        this.wlResourcePtr = pointer;
+        this.implementation = null;
+        addDestroyListener(new Listener() {
+            @Override
+            public void handle() {
+                notifyDestroyListeners();
+                Resource.this.destroyListeners.clear();
+                ObjectCache.remove(Resource.this.wlResourcePtr);
+                GlobalRef.remove(Resource.this.jObjectRef);
+//                destroy(); // TODO double free?
+            }
+        });
+        ObjectCache.store(pointer,
+                this);
+    }
 
     protected void addDestroyListener(final Listener listener) {
         C.wl_resource_add_destroy_listener(this.wlResourcePtr, listener.wlListenerPointer);

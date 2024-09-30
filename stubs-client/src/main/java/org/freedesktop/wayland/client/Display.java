@@ -19,6 +19,7 @@
 package org.freedesktop.wayland.client;
 
 import org.freedesktop.wayland.C;
+import org.freedesktop.wayland.util.Memory;
 
 import java.lang.foreign.MemorySegment;
 
@@ -83,6 +84,28 @@ import java.lang.foreign.MemorySegment;
 public abstract class Display extends Proxy<Void> {
 
     public static final int OBJECT_ID = 1;
+
+    protected static MemorySegment _connect(String name) {
+        var ptr = C.wl_display_connect(Memory.ARENA_AUTO.allocateFrom(name));
+        if (ptr == MemorySegment.NULL)
+            throw new RuntimeException("Unable to connect to display with name " + name);
+        return ptr;
+    }
+
+    protected static MemorySegment _connect(int fd) {
+        var ptr = C.wl_display_connect_to_fd(fd);
+        if (ptr == MemorySegment.NULL)
+            throw new RuntimeException("Unable to connect to display with file descriptor " + fd);
+        return ptr;
+    }
+
+    public static MemorySegment _connect() {
+        var ptr = C.wl_display_connect(MemorySegment.NULL);
+        if (ptr == MemorySegment.NULL)
+            throw new RuntimeException("Unable to auto connect to a display");
+        return ptr;
+    }
+
 
     protected Display(final MemorySegment pointer) {
         super(pointer,

@@ -23,6 +23,8 @@ import java.lang.annotation.Target;
 public @interface Protocol {
     String path();
 
+    String pkgConfig() default "";
+
     boolean dtd() default false;
 
     String sharedPackage() default "shared";
