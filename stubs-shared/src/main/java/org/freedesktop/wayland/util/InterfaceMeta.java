@@ -1,27 +1,29 @@
-//Copyright 2015 Erik De Rijcke
-//
-//Licensed under the Apache License,Version2.0(the"License");
-//you may not use this file except in compliance with the License.
-//You may obtain a copy of the License at
-//
-//http://www.apache.org/licenses/LICENSE-2.0
-//
-//Unless required by applicable law or agreed to in writing,software
-//distributed under the License is distributed on an"AS IS"BASIS,
-//WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
-//See the License for the specific language governing permissions and
-//limitations under the License.
+/*
+ * Copyright © 2015 Erik De Rijcke
+ * Copyright © 2024 Casey Link
+ *
+ * Licensed under the Apache License,Version2.0(the"License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,software
+ * distributed under the License is distributed on an"AS IS"BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ */
 package org.freedesktop.wayland.util;
 
-import org.freedesktop.jaccall.Pointer;
-import org.freedesktop.wayland.util.jaccall.wl_interface;
-import org.freedesktop.wayland.util.jaccall.wl_message;
 
+import org.freedesktop.wayland.wl_interface;
+
+import java.lang.foreign.MemorySegment;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.freedesktop.jaccall.Pointer.malloc;
-import static org.freedesktop.jaccall.Size.sizeof;
 
 /**
  * Wrapper class for any Java type to get or create a native wayland interface for use with the native wayland
@@ -29,27 +31,24 @@ import static org.freedesktop.jaccall.Size.sizeof;
  */
 public class InterfaceMeta {
 
-    public static final  InterfaceMeta                NO_INTERFACE  = new InterfaceMeta(Pointer.wrap(wl_interface.class,
-                                                                                                     0L));
+    public static final InterfaceMeta NO_INTERFACE = new InterfaceMeta(MemorySegment.NULL);
     private static final Map<Class<?>, InterfaceMeta> INTERFACE_MAP = new HashMap<>();
 
-    public final Pointer<wl_interface> pointer;
+    public final MemorySegment wlInterfacePointer;
 
-    protected InterfaceMeta(final Pointer<wl_interface> pointer) {
-        this.pointer = pointer;
-        ObjectCache.store(getNative().address,
-                          this);
+    protected InterfaceMeta(final MemorySegment wlInterfacePointer) {
+        this.wlInterfacePointer = wlInterfacePointer;
+        ObjectCache.store(this.wlInterfacePointer, this);
     }
 
-    public Pointer<wl_interface> getNative() {
-        return this.pointer;
+    public MemorySegment getNativeWlInterface() {
+        return this.wlInterfacePointer;
     }
 
     /**
      * Scans this type for {@link Interface} annotations and creates a native context if possible.
      *
      * @param type Any Java type.
-     *
      * @return The associated {@link InterfaceMeta} or {@link #NO_INTERFACE} if the type does not have a wayland interface
      * associated with it.
      */
@@ -59,15 +58,14 @@ public class InterfaceMeta {
             final Interface waylandInterface = type.getAnnotation(Interface.class);
             if (waylandInterface == null) {
                 interfaceMeta = NO_INTERFACE;
-            }
-            else {
+            } else {
                 interfaceMeta = create(waylandInterface.name(),
-                                       waylandInterface.version(),
-                                       waylandInterface.methods(),
-                                       waylandInterface.events());
+                        waylandInterface.version(),
+                        waylandInterface.methods(),
+                        waylandInterface.events());
             }
             INTERFACE_MAP.put(type,
-                              interfaceMeta);
+                    interfaceMeta);
         }
         return interfaceMeta;
     }
@@ -76,42 +74,19 @@ public class InterfaceMeta {
                                           final int version,
                                           final Message[] methods,
                                           final Message[] events) {
-
-        final int method_count = methods.length;
-        final Pointer<wl_message> methodPointer = malloc(method_count * wl_message.SIZE,
-                                                         wl_message.class);
-        for (int i = 0; i < method_count; i++) {
-            MessageMeta.init(methodPointer.plus(i),
-                             methods[i]);
-        }
-
-        final int event_count = events.length;
-        final Pointer<wl_message> eventPointer = malloc(event_count * wl_message.SIZE,
-                                                        wl_message.class);
-        for (int i = 0; i < event_count; i++) {
-            MessageMeta.init(eventPointer.plus(i),
-                             events[i]);
-        }
-
-        final Pointer<wl_interface> wlInterfacePointer = malloc(wl_interface.SIZE,
-                                                                wl_interface.class);
-        final Pointer<String> namePointer = malloc(sizeof(name),
-                                                   String.class);
-        namePointer.set(name);
-
-        final wl_interface wlInterface = wlInterfacePointer.get();
-        wlInterface.setName(namePointer);
-        wlInterface.setVersion(version);
-        wlInterface.setMethod_count(method_count);
-        wlInterface.setMethods(methodPointer);
-        wlInterface.setEvent_count(event_count);
-        wlInterface.setEvents(eventPointer);
-
-        return InterfaceMeta.get(wlInterfacePointer);
+        // TODO audit arena usage here
+        MemorySegment wl_interface_ptr = wl_interface.allocate(Memory.ARENA_AUTO);
+        wl_interface.name(wl_interface_ptr, Memory.ARENA_AUTO.allocateFrom(name));
+        wl_interface.version(wl_interface_ptr, version);
+        wl_interface.method_count(wl_interface_ptr, methods.length);
+        wl_interface.event_count(wl_interface_ptr, events.length);
+        wl_interface.methods(wl_interface_ptr, MessageMeta.initArray(methods, Memory.ARENA_AUTO));
+        wl_interface.events(wl_interface_ptr, MessageMeta.initArray(events, Memory.ARENA_AUTO));
+        return InterfaceMeta.get(wl_interface_ptr);
     }
 
-    public static InterfaceMeta get(final Pointer<wl_interface> pointer) {
-        InterfaceMeta interfaceMeta = ObjectCache.from(pointer.address);
+    public static InterfaceMeta get(MemorySegment pointer) {
+        InterfaceMeta interfaceMeta = ObjectCache.from(pointer);
         if (interfaceMeta == null) {
             interfaceMeta = new InterfaceMeta(pointer);
         }
@@ -119,14 +94,12 @@ public class InterfaceMeta {
     }
 
     public String getName() {
-        return this.pointer.get()
-                           .getName()
-                           .get();
+        return wl_interface.name(this.wlInterfacePointer).getString(0);
     }
 
     @Override
     public int hashCode() {
-        return getNative().hashCode();
+        return getNativeWlInterface().hashCode();
     }
 
     @Override
@@ -140,6 +113,6 @@ public class InterfaceMeta {
 
         final InterfaceMeta that = (InterfaceMeta) o;
 
-        return getNative().equals(that.getNative());
+        return getNativeWlInterface().equals(that.getNativeWlInterface());
     }
 }

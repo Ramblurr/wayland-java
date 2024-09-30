@@ -1,79 +1,70 @@
-//Copyright 2015 Erik De Rijcke
-//
-//Licensed under the Apache License,Version2.0(the"License");
-//you may not use this file except in compliance with the License.
-//You may obtain a copy of the License at
-//
-//http://www.apache.org/licenses/LICENSE-2.0
-//
-//Unless required by applicable law or agreed to in writing,software
-//distributed under the License is distributed on an"AS IS"BASIS,
-//WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
-//See the License for the specific language governing permissions and
-//limitations under the License.
+/*
+ * Copyright © 2015 Erik De Rijcke
+ * Copyright © 2024 Casey Link
+ *
+ * Licensed under the Apache License,Version2.0(the"License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,software
+ * distributed under the License is distributed on an"AS IS"BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ */
 package org.freedesktop.wayland.util;
 
-import org.freedesktop.jaccall.Pointer;
-import org.freedesktop.wayland.util.jaccall.wl_interface;
-import org.freedesktop.wayland.util.jaccall.wl_message;
+import org.freedesktop.wayland.wl_message;
 
-import static org.freedesktop.jaccall.Pointer.malloc;
-import static org.freedesktop.jaccall.Size.sizeof;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
+import java.util.stream.Stream;
 
 /**
  * Wrapper class for a {@link Message} to create a native wayland message for use with the native library. To create
- * a new native context for a given {@link Message}, use {@link #init(Pointer, Message)} .
+ * a new native context for a given {@link Message}, use {@link #init(MemorySegment, Message)} .
  *
  * @see InterfaceMeta
  */
 public class MessageMeta {
 
-    public final  Pointer<wl_message> pointer;
-    private final Message             message;
+    public final MemorySegment wlMessagePointer;
+    private final Message message;
 
-    protected MessageMeta(final Pointer<wl_message> pointer,
+    protected MessageMeta(final MemorySegment wlMessagePointer,
                           final Message message) {
-        this.pointer = pointer;
+        this.wlMessagePointer = wlMessagePointer;
         this.message = message;
-        ObjectCache.store(getNative().address,
-                          this);
+        ObjectCache.store(this.wlMessagePointer, this);
     }
 
-    public Pointer<wl_message> getNative() {
-        return this.pointer;
+    public MemorySegment getNativeWlMessage() {
+        return this.wlMessagePointer;
     }
 
-    public static void init(final Pointer<wl_message> wlMessagePointer,
-                            final Message message) {
-        //init args interfaces
-        final Class<?>[] types = message.types();
-        final Pointer<Pointer<wl_interface>> typesPointer = malloc(sizeof((Pointer) null) * types.length,
-                                                                   wl_interface.class).castpp();
-        for (int i = 0; i < types.length; i++) {
-            typesPointer.set(i,
-                             InterfaceMeta.get(types[i])
-                                          .getNative());
+    public static MemorySegment initArray(Message[] methods, Arena arena) {
+        MemorySegment methods_array = wl_message.allocateArray(methods.length, arena);
+        for (int i = 0; i < methods.length; i++) {
+            MemorySegment wlMessagePointer = wl_message.asSlice(methods_array, i);
+            MessageMeta.init(wlMessagePointer, methods[i]);
         }
+        return methods_array;
+    }
 
-        final wl_message wlMessage = wlMessagePointer.get();
-
-        //set name
-        final Pointer<String> namePointer = malloc(sizeof(message.name()),
-                                                   String.class);
-        namePointer.set(message.name());
-        wlMessage.setName(namePointer);
-
-        //set signature
-        final Pointer<String> signaturePointer = malloc(sizeof(message.signature()),
-                                                        String.class);
-        signaturePointer.set(message.signature());
-        wlMessage.setSignature(signaturePointer);
-
-        //set types
-        wlMessage.setTypes(typesPointer);
-
-        new MessageMeta(wlMessagePointer,
-                        message);
+    public static MessageMeta init(final MemorySegment wlMessagePointer, final Message message) {
+        // TODO audit arena usage here
+        wl_message.name(wlMessagePointer, Memory.ARENA_AUTO.allocateFrom(message.name()));
+        wl_message.signature(wlMessagePointer, Memory.ARENA_AUTO.allocateFrom(message.signature()));
+        MemorySegment typesArray = PointerArray.fromStream(Stream.of(message.types()),
+                (c) -> InterfaceMeta.get(c).getNativeWlInterface(),
+                Memory.ARENA_AUTO
+        );
+        wl_message.types(wlMessagePointer, typesArray);
+        return new MessageMeta(wlMessagePointer, message);
     }
 
     public Message getMessage() {
@@ -82,7 +73,7 @@ public class MessageMeta {
 
     @Override
     public int hashCode() {
-        return getNative().hashCode();
+        return getNativeWlMessage().hashCode();
     }
 
     @Override
@@ -96,6 +87,6 @@ public class MessageMeta {
 
         final MessageMeta messageMeta = (MessageMeta) o;
 
-        return getNative().equals(messageMeta.getNative());
+        return getNativeWlMessage().equals(messageMeta.getNativeWlMessage());
     }
 }

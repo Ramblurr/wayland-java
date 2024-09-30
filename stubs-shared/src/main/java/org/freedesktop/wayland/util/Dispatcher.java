@@ -1,26 +1,27 @@
-//Copyright 2015 Erik De Rijcke
-//
-//Licensed under the Apache License,Version2.0(the"License");
-//you may not use this file except in compliance with the License.
-//You may obtain a copy of the License at
-//
-//http://www.apache.org/licenses/LICENSE-2.0
-//
-//Unless required by applicable law or agreed to in writing,software
-//distributed under the License is distributed on an"AS IS"BASIS,
-//WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
-//See the License for the specific language governing permissions and
-//limitations under the License.
+/*
+ * Copyright © 2015 Erik De Rijcke
+ * Copyright © 2024 Casey Link
+ *
+ * Licensed under the Apache License,Version2.0(the"License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,software
+ * distributed under the License is distributed on an"AS IS"BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ */
 package org.freedesktop.wayland.util;
 
-import org.freedesktop.jaccall.JNI;
-import org.freedesktop.jaccall.Pointer;
-import org.freedesktop.jaccall.Ptr;
-import org.freedesktop.wayland.util.jaccall.wl_argument;
-import org.freedesktop.wayland.util.jaccall.wl_array;
-import org.freedesktop.wayland.util.jaccall.wl_dispatcher_func_t;
-import org.freedesktop.wayland.util.jaccall.wl_message;
 
+import org.freedesktop.wayland.wl_dispatcher_func_t;
+
+import java.lang.foreign.MemorySegment;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -29,38 +30,31 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.freedesktop.jaccall.Pointer.wrap;
-import static org.freedesktop.wayland.util.jaccall.Pointerwl_dispatcher_func_t.nref;
 
-public final class Dispatcher implements wl_dispatcher_func_t {
+public final class Dispatcher {
+    public static final MemorySegment INSTANCE = wl_dispatcher_func_t.allocate(Dispatcher::invoke, Memory.ARENA_AUTO);
+    private static final Map<Class<?>, Map<Integer, Method>> METHOD_CACHE = new HashMap<>();
+    private static final Map<Class<?>, Constructor<?>> CONSTRUCTOR_CACHE = new HashMap<>();
 
-    public static final  Pointer<wl_dispatcher_func_t>       INSTANCE          = nref(new Dispatcher());
-    private static final Map<Class<?>, Map<Integer, Method>> METHOD_CACHE      = new HashMap<>();
-    private static final Map<Class<?>, Constructor<?>>       CONSTRUCTOR_CACHE = new HashMap<>();
+    public static int invoke(final MemorySegment implementation,
+                             final MemorySegment wlObject /* wl_proxy or wl_resource */,
+                             final int opcode,
+                             MemorySegment wlMessage,
+                             MemorySegment wlArguments) {
 
-    Dispatcher() {
-    }
-
-    public int invoke(@Ptr(Object.class) final long implementation,
-                      @Ptr final long wlObject,
-                      final int opcode,
-                      @Ptr(wl_message.class) final long wlMessage,
-                      @Ptr(wl_argument.class) final long wlArguments) {
-
-        Method        method        = null;
-        Object[]      jargs         = null;
-        Message       message       = null;
+        Method method = null;
+        Object[] jargs = null;
+        Message message = null;
         WaylandObject waylandObject = null;
 
         try {
             message = ObjectCache.<MessageMeta>from(wlMessage)
                     .getMessage();
-            waylandObject = (WaylandObject) wrap(Object.class,
-                                                 implementation).get();
+            waylandObject = ObjectCache.from(wlObject);
             method = get(waylandObject.getClass(),
-                         waylandObject.getImplementation()
-                                      .getClass(),
-                         message);
+                    waylandObject.getImplementation()
+                            .getClass(),
+                    message);
 
             final String signature = message.signature();
             //TODO do something with the version signature? Somehow see which version the implementation exposes and
@@ -68,8 +62,7 @@ public final class Dispatcher implements wl_dispatcher_func_t {
             final String messageSignature;
             if (signature.length() > 0 && Character.isDigit(signature.charAt(0))) {
                 messageSignature = signature.substring(1);
-            }
-            else {
+            } else {
                 messageSignature = signature;
             }
 
@@ -78,25 +71,24 @@ public final class Dispatcher implements wl_dispatcher_func_t {
             jargs[0] = waylandObject;
 
             if (nroArgs > 0) {
-                final Arguments arguments = new Arguments(wrap(wl_argument.class,
-                                                               wlArguments));
+                final Arguments arguments = new Arguments(wlArguments);
                 boolean optional = false;
-                int     argIndex = 0;
+                int argIndex = 0;
                 for (final char signatureChar : messageSignature.toCharArray()) {
                     if (signatureChar == '?') {
                         optional = true;
                         continue;
                     }
                     final Object jarg = fromArgument(arguments,
-                                                     argIndex,
-                                                     signatureChar,
-                                                     message.types()[argIndex]);
+                            argIndex,
+                            signatureChar,
+                            message.types()[argIndex]);
                     if (!optional && jarg == null) {
                         throw new IllegalArgumentException(String.format("Got non optional argument that is null!. "
-                                                                         + "Message: %s(%s), violated arg index: %d",
-                                                                         message.name(),
-                                                                         message.signature(),
-                                                                         argIndex));
+                                        + "Message: %s(%s), violated arg index: %d",
+                                message.name(),
+                                message.signature(),
+                                argIndex));
                     }
                     argIndex++;
                     jargs[argIndex] = jarg;
@@ -104,18 +96,17 @@ public final class Dispatcher implements wl_dispatcher_func_t {
                 }
             }
             method.invoke(waylandObject.getImplementation(),
-                          jargs);
-        }
-        catch (final Exception e) {
+                    jargs);
+        } catch (final Exception e) {
             System.err.println(String.format("Got an exception, This is most likely a bug.\n"
-                                             + "Method=%s\n" +
-                                             "implementation=%s\n" +
-                                             "arguments=%s\n" +
-                                             "message=%s",
-                                             method,
-                                             waylandObject.getImplementation(),
-                                             Arrays.toString(jargs),
-                                             message));
+                            + "Method=%s\n" +
+                            "implementation=%s\n" +
+                            "arguments=%s\n" +
+                            "message=%s",
+                    method,
+                    waylandObject.getImplementation(),
+                    Arrays.toString(jargs),
+                    message));
             e.printStackTrace();
         }
 
@@ -130,27 +121,27 @@ public final class Dispatcher implements wl_dispatcher_func_t {
         if (methodMap == null) {
             methodMap = new HashMap<>();
             METHOD_CACHE.put(implementationType,
-                             methodMap);
+                    methodMap);
         }
 
         final int methodHash = Objects.hash(waylandObjectType,
-                                            message);
+                message);
         Method method = methodMap.get(methodHash);
         if (method == null) {
-            final Class<?>[] types    = message.types();
+            final Class<?>[] types = message.types();
             final Class<?>[] argTypes = new Class<?>[types.length + 1];
             //copy to new array and shift by 1
             System.arraycopy(types,
-                             0,
-                             argTypes,
-                             1,
-                             types.length);
+                    0,
+                    argTypes,
+                    1,
+                    types.length);
             argTypes[0] = waylandObjectType;
             method = implementationType.getMethod(message.functionName(),
-                                                  argTypes);
+                    argTypes);
             method.setAccessible(true);
             methodMap.put(methodHash,
-                          method);
+                    method);
         }
         return method;
     }
@@ -173,19 +164,17 @@ public final class Dispatcher implements wl_dispatcher_func_t {
                 return arguments.getH(index);
             }
             case 'o': {
-                final Pointer<?> waylandObjectPointer = arguments.getO(index);
+                final MemorySegment waylandObjectPointer = arguments.getO(index);
 
                 final WaylandObject waylandObject;
-                if (waylandObjectPointer.address == 0L) {
+                if (waylandObjectPointer == MemorySegment.NULL) {
                     waylandObject = null;
-                }
-                else {
-                    final WaylandObject cachedObject = ObjectCache.from(waylandObjectPointer.address);
+                } else {
+                    final WaylandObject cachedObject = ObjectCache.from(waylandObjectPointer);
                     if (cachedObject == null) {
                         waylandObject = reconstruct(waylandObjectPointer,
-                                                    targetType);
-                    }
-                    else {
+                                targetType);
+                    } else {
                         waylandObject = cachedObject;
                     }
                 }
@@ -198,9 +187,8 @@ public final class Dispatcher implements wl_dispatcher_func_t {
                 return arguments.getS(index);
             }
             case 'a': {
-                final wl_array wlArray = arguments.getA(index);
-                return JNI.wrap(wlArray.getData().address,
-                                (int) wlArray.getAlloc());
+                // TODO returning a MemorySegment is probably not right..
+                return arguments.getA(index);
             }
             default: {
                 throw new IllegalArgumentException("Can not convert wl_argument type: " + type);
@@ -208,7 +196,7 @@ public final class Dispatcher implements wl_dispatcher_func_t {
         }
     }
 
-    private static WaylandObject reconstruct(final Pointer<?> objectPointer,
+    private static WaylandObject reconstruct(final MemorySegment objectPointer,
                                              final Class<?> targetType) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         Constructor<?> constructor = CONSTRUCTOR_CACHE.get(targetType);
         if (constructor == null) {
@@ -216,8 +204,8 @@ public final class Dispatcher implements wl_dispatcher_func_t {
             constructor = targetType.getDeclaredConstructor(Long.class);
             constructor.setAccessible(true);
             CONSTRUCTOR_CACHE.put(targetType,
-                                  constructor);
+                    constructor);
         }
-        return (WaylandObject) constructor.newInstance(objectPointer.address);
+        return (WaylandObject) constructor.newInstance(objectPointer);
     }
 }
