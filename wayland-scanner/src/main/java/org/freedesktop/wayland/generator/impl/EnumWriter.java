@@ -34,17 +34,17 @@ public class EnumWriter {
         final JavaWriter javaWriter = new JavaWriter(writer);
         //imports
         javaWriter.emitPackage(sharedPackage)
-                  .emitSingleLineComment(copyright.replace("\n",
-                                                           "\n//"));
+                .emitSingleLineComment(copyright.replace("\n",
+                        "\n//"));
         //class javadoc
         javaWriter.emitJavadoc(getDoc(enumNode));
         //begin type
         javaWriter.beginType(getJavaTypeNameEnum(sharedPackage,
-                                                 interfaceNode,
-                                                 enumNode),
-                             "enum",
-                             EnumSet.of(Modifier.PUBLIC),
-                             null);
+                        interfaceNode,
+                        enumNode),
+                "enum",
+                EnumSet.of(Modifier.PUBLIC),
+                null);
 
         //enum values
         //javaWriter.emitEnumValue()
@@ -61,23 +61,23 @@ public class EnumWriter {
             }
 
             javaWriter.emitJavadoc(summary)
-                      .emitEnumValue(name.toUpperCase() + "(" + value + ")",
-                                     (i + 1) == enumEntries.getLength());
+                    .emitEnumValue(name.toUpperCase() + "(" + value + ")",
+                            (i + 1) == enumEntries.getLength());
         }
 
         //field
         javaWriter.emitEmptyLine()
-                  .emitField(int.class.getName(),
-                             "value",
-                             EnumSet.of(Modifier.PUBLIC,
-                                        Modifier.FINAL));
+                .emitField(int.class.getName(),
+                        "value",
+                        EnumSet.of(Modifier.PUBLIC,
+                                Modifier.FINAL));
         //constructor
         javaWriter.emitEmptyLine()
-                  .beginConstructor(EnumSet.of(Modifier.PRIVATE),
-                                    int.class.getName(),
-                                    "value")
-                  .emitStatement("this.value = value")
-                  .endConstructor();
+                .beginConstructor(EnumSet.of(Modifier.PRIVATE),
+                        int.class.getName(),
+                        "value")
+                .emitStatement("this.value = value")
+                .endConstructor();
 
         javaWriter.endType();
     }

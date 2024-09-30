@@ -39,25 +39,25 @@ public class InterfaceWriter {
                       final String copyright,
                       final Element interfaceElement) throws IOException {
         final String packageRoot = packageElement.getQualifiedName()
-                                                 .toString();
+                .toString();
         writeShared(packageElement,
-                    filer,
-                    packageRoot + "." + protocol.sharedPackage(),
-                    copyright,
-                    interfaceElement);
+                filer,
+                packageRoot + "." + protocol.sharedPackage(),
+                copyright,
+                interfaceElement);
         if (protocol.generateServer()) {
             writeServer(packageElement,
-                        filer,
-                        packageRoot + "." + protocol.serverPackage(),
-                        copyright,
-                        interfaceElement);
+                    filer,
+                    packageRoot + "." + protocol.serverPackage(),
+                    copyright,
+                    interfaceElement);
         }
         if (protocol.generateClient()) {
             writeClient(packageElement,
-                        filer,
-                        packageRoot + "." + protocol.clientPackage(),
-                        copyright,
-                        interfaceElement);
+                    filer,
+                    packageRoot + "." + protocol.clientPackage(),
+                    copyright,
+                    interfaceElement);
         }
     }
 
@@ -70,14 +70,14 @@ public class InterfaceWriter {
         for (int i = 0; i < enums.getLength(); i++) {
             final Element enumElement = (Element) enums.item(i);
             writeEnum(filer.createSourceFile(getJavaTypeNameEnum(sharedPackage,
-                                                                 interfaceElement,
-                                                                 enumElement),
-                                             packageElement)
-                           .openWriter(),
-                      sharedPackage,
-                      copyright,
-                      interfaceElement,
-                      enumElement);
+                                            interfaceElement,
+                                            enumElement),
+                                    packageElement)
+                            .openWriter(),
+                    sharedPackage,
+                    copyright,
+                    interfaceElement,
+                    enumElement);
         }
     }
 
@@ -87,18 +87,18 @@ public class InterfaceWriter {
                              final String copyright,
                              final Element interfaceNode) throws IOException {
         writeRequests(filer,
-                      serverPackage,
-                      copyright,
-                      interfaceNode);
+                serverPackage,
+                copyright,
+                interfaceNode);
 
         writeResource(filer.createSourceFile(getJavaTypeNameResource(serverPackage,
-                                                                     interfaceNode,
-                                                                     1),
-                                             packageElement)
-                           .openWriter(),
-                      serverPackage,
-                      copyright,
-                      interfaceNode);
+                                        interfaceNode,
+                                        1),
+                                packageElement)
+                        .openWriter(),
+                serverPackage,
+                copyright,
+                interfaceNode);
     }
 
     private void writeClient(final PackageElement packageElement,
@@ -107,18 +107,18 @@ public class InterfaceWriter {
                              final String copyright,
                              final Element interfaceXMLNode) throws IOException {
         writeProxy(filer.createSourceFile(StringUtil.getJavaTypeNameProxy(clientPackage,
-                                                                          interfaceXMLNode,
-                                                                          1),
-                                          packageElement)
+                                        interfaceXMLNode,
+                                        1),
+                                packageElement)
                         .openWriter(),
-                   clientPackage,
-                   copyright,
-                   interfaceXMLNode);
+                clientPackage,
+                copyright,
+                interfaceXMLNode);
 
         writeEvents(filer,
-                    clientPackage,
-                    copyright,
-                    interfaceXMLNode);
+                clientPackage,
+                copyright,
+                interfaceXMLNode);
     }
 
     private void writeEnum(final Writer writer,
@@ -127,10 +127,10 @@ public class InterfaceWriter {
                            final Element interfaceElement,
                            final Element enumElement) throws IOException {
         new EnumWriter().write(writer,
-                               sharedPackage,
-                               copyright,
-                               interfaceElement,
-                               enumElement);
+                sharedPackage,
+                copyright,
+                interfaceElement,
+                enumElement);
         writer.close();
     }
 
@@ -139,9 +139,9 @@ public class InterfaceWriter {
                                final String copyright,
                                final Element interfaceNode) throws IOException {
         new RequestsWriter().write(filer,
-                                   serverPackage,
-                                   copyright,
-                                   interfaceNode);
+                serverPackage,
+                copyright,
+                interfaceNode);
     }
 
     private void writeResource(final Writer writer,
@@ -149,9 +149,9 @@ public class InterfaceWriter {
                                final String copyright,
                                final Element interfaceNode) throws IOException {
         new ResourceWriter().write(writer,
-                                   serverPackage,
-                                   copyright,
-                                   interfaceNode);
+                serverPackage,
+                copyright,
+                interfaceNode);
         writer.close();
     }
 
@@ -160,9 +160,9 @@ public class InterfaceWriter {
                             final String copyright,
                             final Element interfaceXMLNode) throws IOException {
         new ProxyWriter().write(writer,
-                                clientPackage,
-                                copyright,
-                                interfaceXMLNode);
+                clientPackage,
+                copyright,
+                interfaceXMLNode);
         writer.close();
     }
 
@@ -171,8 +171,8 @@ public class InterfaceWriter {
                              final String copyright,
                              final Element interfaceXMLNode) throws IOException {
         new EventsWriter().write(filer,
-                                 clientPackage,
-                                 copyright,
-                                 interfaceXMLNode);
+                clientPackage,
+                copyright,
+                interfaceXMLNode);
     }
 }

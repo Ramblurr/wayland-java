@@ -25,19 +25,15 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.EnumSet;
 
-import static org.freedesktop.wayland.generator.impl.StringUtil.getArgumentForResource;
-import static org.freedesktop.wayland.generator.impl.StringUtil.getDoc;
-import static org.freedesktop.wayland.generator.impl.StringUtil.getJavaTypeNameRequests;
-import static org.freedesktop.wayland.generator.impl.StringUtil.getJavaTypeNameResource;
-import static org.freedesktop.wayland.generator.impl.StringUtil.lowerCamelName;
+import static org.freedesktop.wayland.generator.impl.StringUtil.*;
 
 public class RequestsWriter {
 
-    private static final String ELEMENT_REQUEST      = "request";
-    private static final String ATTRIBUTE_NAME       = "name";
-    private static final String ATTRIBUTE_VERSION    = "version";
-    private static final String ELEMENT_ARG          = "arg";
-    private static final String ATTRIBUTE_SINCE      = "since";
+    private static final String ELEMENT_REQUEST = "request";
+    private static final String ATTRIBUTE_NAME = "name";
+    private static final String ATTRIBUTE_VERSION = "version";
+    private static final String ELEMENT_ARG = "arg";
+    private static final String ATTRIBUTE_SINCE = "since";
     private static final String ATTRIBUTE_ALLOW_NULL = "allow-null";
 
     public void write(final Filer filer,
@@ -47,10 +43,10 @@ public class RequestsWriter {
         final int maxVersion = Integer.parseInt(interfaceNode.getAttribute(ATTRIBUTE_VERSION));
         for (int version = 1; version <= maxVersion; version++) {
             writeVersion(filer,
-                         serverPackage,
-                         copyright,
-                         interfaceNode,
-                         version);
+                    serverPackage,
+                    copyright,
+                    interfaceNode,
+                    version);
         }
     }
 
@@ -61,41 +57,40 @@ public class RequestsWriter {
                               final int version) throws IOException {
 
         final Writer writer = filer.createSourceFile(getJavaTypeNameRequests(serverPackage,
-                                                                             interfaceNode,
-                                                                             version))
-                                   .openWriter();
+                        interfaceNode,
+                        version))
+                .openWriter();
 
         final JavaWriter javaWriter = new JavaWriter(writer);
         //imports
         javaWriter.emitPackage(serverPackage)
-                  .emitImports(Nullable.class,
-                               Nonnull.class)
-                  .emitSingleLineComment(copyright.replace("\n",
-                                                           "\n//"));
+                .emitImports(Nullable.class,
+                        Nonnull.class)
+                .emitSingleLineComment(copyright.replace("\n",
+                        "\n//"));
         //class javadoc
         javaWriter.emitJavadoc(getDoc(interfaceNode));
         //begin type
         final String extendsType;
         if (version > 1) {
             extendsType = getJavaTypeNameRequests(serverPackage,
-                                                  interfaceNode,
-                                                  version - 1);
-        }
-        else {
+                    interfaceNode,
+                    version - 1);
+        } else {
             extendsType = null;
         }
 
         javaWriter.beginType(getJavaTypeNameRequests(serverPackage,
-                                                     interfaceNode,
-                                                     version),
-                             "interface",
-                             EnumSet.of(Modifier.PUBLIC),
-                             extendsType);
+                        interfaceNode,
+                        version),
+                "interface",
+                EnumSet.of(Modifier.PUBLIC),
+                extendsType);
         //version constant
         javaWriter.emitField(int.class.getName(),
-                             "VERSION",
-                             EnumSet.noneOf(Modifier.class),
-                             Integer.toString(version));
+                "VERSION",
+                EnumSet.noneOf(Modifier.class),
+                Integer.toString(version));
         //methods
         final NodeList requestNodes = interfaceNode.getElementsByTagName(ELEMENT_REQUEST);
         for (int i = 0; i < requestNodes.getLength(); i++) {
@@ -114,8 +109,8 @@ public class RequestsWriter {
             //method javadoc
             final String[] args = new String[((argElements.getLength() + 1) * 2)];
             args[0] = getJavaTypeNameResource(serverPackage,
-                                              interfaceNode,
-                                              1);
+                    interfaceNode,
+                    1);
             args[1] = "requester";
 
             String javaDoc = getDoc(requestElement);
@@ -125,13 +120,13 @@ public class RequestsWriter {
                 final Element argElement = (Element) argElements.item(j);
                 final boolean allowNull = Boolean.valueOf(argElement.getAttribute(ATTRIBUTE_ALLOW_NULL));
                 final String[] argumentForResource = getArgumentForResource(serverPackage,
-                                                                            argElement);
+                        argElement);
                 final int k = (j + 1) * 2;
                 String argumentType = argumentForResource[0];
                 if (!StringUtil.isPrimitive(argumentType)) {
                     argumentType = allowNull ?
-                                   "@" + javaWriter.compressType(Nullable.class.getSimpleName()) + " " + argumentType :
-                                   "@" + javaWriter.compressType(Nonnull.class.getSimpleName()) + " " + argumentType;
+                            "@" + javaWriter.compressType(Nullable.class.getSimpleName()) + " " + argumentType :
+                            "@" + javaWriter.compressType(Nonnull.class.getSimpleName()) + " " + argumentType;
                 }
                 args[k] = argumentType;
                 args[k + 1] = StringUtil.escapeJavaKeyword(argumentForResource[1]);
@@ -141,12 +136,12 @@ public class RequestsWriter {
 
             //method javadoc
             javaWriter.emitEmptyLine()
-                      .emitJavadoc(javaDoc);
+                    .emitJavadoc(javaDoc);
             //actual method
             javaWriter.beginMethod("void",
-                                   lowerCamelName(requestName),
-                                   EnumSet.of(Modifier.PUBLIC),
-                                   args);
+                    lowerCamelName(requestName),
+                    EnumSet.of(Modifier.PUBLIC),
+                    args);
             javaWriter.endMethod();
         }
         //end type

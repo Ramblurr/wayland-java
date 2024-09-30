@@ -25,19 +25,15 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.EnumSet;
 
-import static org.freedesktop.wayland.generator.impl.StringUtil.getArgumentForProxy;
-import static org.freedesktop.wayland.generator.impl.StringUtil.getDoc;
-import static org.freedesktop.wayland.generator.impl.StringUtil.getJavaTypeNameEvents;
-import static org.freedesktop.wayland.generator.impl.StringUtil.getJavaTypeNameProxy;
-import static org.freedesktop.wayland.generator.impl.StringUtil.lowerCamelName;
+import static org.freedesktop.wayland.generator.impl.StringUtil.*;
 
 public class EventsWriter {
 
-    private static final String ELEMENT_EVENT        = "event";
-    private static final String ATTRIBUTE_NAME       = "name";
-    private static final String ATTRIBUTE_VERSION    = "version";
-    private static final String ATTRIBUTE_SINCE      = "since";
-    private static final String ELEMENT_ARG          = "arg";
+    private static final String ELEMENT_EVENT = "event";
+    private static final String ATTRIBUTE_NAME = "name";
+    private static final String ATTRIBUTE_VERSION = "version";
+    private static final String ATTRIBUTE_SINCE = "since";
+    private static final String ELEMENT_ARG = "arg";
     private static final String ATTRIBUTE_ALLOW_NULL = "allow-null";
 
 
@@ -48,10 +44,10 @@ public class EventsWriter {
         final int maxVersion = Integer.parseInt(interfaceNode.getAttribute(ATTRIBUTE_VERSION));
         for (int version = 1; version <= maxVersion; version++) {
             writeVersion(filer,
-                         clientPackage,
-                         copyright,
-                         interfaceNode,
-                         version);
+                    clientPackage,
+                    copyright,
+                    interfaceNode,
+                    version);
         }
     }
 
@@ -63,41 +59,40 @@ public class EventsWriter {
 
 
         final Writer writer = filer.createSourceFile(getJavaTypeNameEvents(clientPackage,
-                                                                           interfaceNode,
-                                                                           version))
-                                   .openWriter();
+                        interfaceNode,
+                        version))
+                .openWriter();
         final JavaWriter javaWriter = new JavaWriter(writer);
 
         //imports
         javaWriter.emitPackage(clientPackage)
-                  .emitImports(Nullable.class,
-                               Nonnull.class)
-                  .emitSingleLineComment(copyright.replace("\n",
-                                                           "\n//"));
+                .emitImports(Nullable.class,
+                        Nonnull.class)
+                .emitSingleLineComment(copyright.replace("\n",
+                        "\n//"));
         //class javadoc
         javaWriter.emitJavadoc(getDoc(interfaceNode));
         //begin type
         final String extendsType;
         if (version > 1) {
             extendsType = getJavaTypeNameEvents(clientPackage,
-                                                interfaceNode,
-                                                version - 1);
-        }
-        else {
+                    interfaceNode,
+                    version - 1);
+        } else {
             extendsType = null;
         }
 
         javaWriter.beginType(getJavaTypeNameEvents(clientPackage,
-                                                   interfaceNode,
-                                                   version),
-                             "interface",
-                             EnumSet.of(Modifier.PUBLIC),
-                             extendsType);
+                        interfaceNode,
+                        version),
+                "interface",
+                EnumSet.of(Modifier.PUBLIC),
+                extendsType);
         //version constant
         javaWriter.emitField(int.class.getName(),
-                             "VERSION",
-                             EnumSet.noneOf(Modifier.class),
-                             Integer.toString(version));
+                "VERSION",
+                EnumSet.noneOf(Modifier.class),
+                Integer.toString(version));
 
         //methods
         final NodeList eventNodes = interfaceNode.getElementsByTagName(ELEMENT_EVENT);
@@ -115,8 +110,8 @@ public class EventsWriter {
             //construct java method arg types & names
             final String[] args = new String[((argElements.getLength() + 1) * 2)];
             args[0] = getJavaTypeNameProxy(clientPackage,
-                                           interfaceNode,
-                                           1);
+                    interfaceNode,
+                    1);
             args[1] = "emitter";
 
             String javaDoc = getDoc(requestElement);
@@ -126,13 +121,13 @@ public class EventsWriter {
                 final Element argElement = (Element) argElements.item(j);
                 final boolean allowNull = Boolean.valueOf(argElement.getAttribute(ATTRIBUTE_ALLOW_NULL));
                 final String[] argumentForProxy = getArgumentForProxy(clientPackage,
-                                                                      argElement);
+                        argElement);
                 final int k = (j + 1) * 2;
                 String argumentType = argumentForProxy[0];
                 if (!StringUtil.isPrimitive(argumentType)) {
                     argumentType = allowNull ?
-                                   "@" + javaWriter.compressType(Nullable.class.getSimpleName()) + " " + argumentType :
-                                   "@" + javaWriter.compressType(Nonnull.class.getSimpleName()) + " " + argumentType;
+                            "@" + javaWriter.compressType(Nullable.class.getSimpleName()) + " " + argumentType :
+                            "@" + javaWriter.compressType(Nonnull.class.getSimpleName()) + " " + argumentType;
                 }
                 args[k] = argumentType;
                 args[k + 1] = StringUtil.escapeJavaKeyword(argumentForProxy[1]);
@@ -141,12 +136,12 @@ public class EventsWriter {
             }
             //method javadoc
             javaWriter.emitEmptyLine()
-                      .emitJavadoc(javaDoc);
+                    .emitJavadoc(javaDoc);
             //actual method
             javaWriter.beginMethod("void",
-                                   lowerCamelName(requestName),
-                                   EnumSet.of(Modifier.PUBLIC),
-                                   args);
+                    lowerCamelName(requestName),
+                    EnumSet.of(Modifier.PUBLIC),
+                    args);
             javaWriter.endMethod();
         }
 

@@ -41,14 +41,13 @@ public class ProtocolsProcessor extends AbstractProcessor {
             for (final Protocol protocol : protocols.value()) {
                 try {
                     new ProtocolGenerator().scan(this.processingEnv.getMessager(),
-                                                 packageElement,
-                                                 this.processingEnv.getFiler(),
-                                                 protocol);
-                }
-                catch (final Exception e) {
+                            packageElement,
+                            this.processingEnv.getFiler(),
+                            protocol);
+                } catch (final Exception e) {
                     this.processingEnv.getMessager()
-                                      .printMessage(Diagnostic.Kind.ERROR,
-                                                    "Got an error while trying to process protocolXML: " + e.getMessage());
+                            .printMessage(Diagnostic.Kind.ERROR,
+                                    "Got an error while trying to process protocolXML: " + e.getMessage());
                     e.printStackTrace();
                 }
             }
