@@ -1,26 +1,31 @@
-//Copyright 2015 Erik De Rijcke
-//
-//Licensed under the Apache License,Version2.0(the"License");
-//you may not use this file except in compliance with the License.
-//You may obtain a copy of the License at
-//
-//http://www.apache.org/licenses/LICENSE-2.0
-//
-//Unless required by applicable law or agreed to in writing,software
-//distributed under the License is distributed on an"AS IS"BASIS,
-//WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
-//See the License for the specific language governing permissions and
-//limitations under the License.
+/*
+ * Copyright © 2015 Erik De Rijcke
+ * Copyright © 2024 Casey Link
+ *
+ * Licensed under the Apache License,Version2.0(the"License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,software
+ * distributed under the License is distributed on an"AS IS"BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ */
 package org.freedesktop.wayland.server;
 
-import org.freedesktop.jaccall.JNI;
-import org.freedesktop.wayland.server.jaccall.WaylandServerCore;
+import org.freedesktop.wayland.C;
 
+import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 
 public class ShmBuffer {
 
-    public final Long pointer;
+    public final MemorySegment pointer;
 
     /**
      * Create a new underlying WlBufferResource with the constructed ShmBuffer as it's implementation.
@@ -42,28 +47,25 @@ public class ShmBuffer {
                      final int height,
                      final int stride,
                      final int format) {
-        this(WaylandServerCore.INSTANCE()
-                              .wl_shm_buffer_create(client.pointer,
-                                                    id,
-                                                    width,
-                                                    height,
-                                                    stride,
-                                                    format));
+        this(C.wl_shm_buffer_create(client.pointer,
+                id,
+                width,
+                height,
+                stride,
+                format));
     }
 
-    protected ShmBuffer(final Long pointer) {
+    protected ShmBuffer(final MemorySegment pointer) {
         this.pointer = pointer;
     }
 
     public static ShmBuffer get(final Resource<?> resource) {
-        final long wlShmBuffer = WaylandServerCore.INSTANCE()
-                                                  .wl_shm_buffer_get(resource.pointer);
+        final MemorySegment wlShmBuffer = C.wl_shm_buffer_get(resource.wlResourcePtr);
 
         final ShmBuffer buffer;
-        if (wlShmBuffer == 0L) {
+        if (wlShmBuffer == MemorySegment.NULL) {
             buffer = null;
-        }
-        else {
+        } else {
             buffer = new ShmBuffer(wlShmBuffer);
         }
         return buffer;
@@ -103,8 +105,7 @@ public class ShmBuffer {
      * buffer from multiple threads.
      */
     public void beginAccess() {
-        WaylandServerCore.INSTANCE()
-                         .wl_shm_buffer_begin_access(this.pointer);
+        C.wl_shm_buffer_begin_access(this.pointer);
     }
 
     /**
@@ -116,8 +117,7 @@ public class ShmBuffer {
      * given buffer will be sent an error.
      */
     public void endAccess() {
-        WaylandServerCore.INSTANCE()
-                         .wl_shm_buffer_end_access(this.pointer);
+        C.wl_shm_buffer_end_access(this.pointer);
     }
 
     /**
@@ -136,29 +136,24 @@ public class ShmBuffer {
      * @return a direct ByteBuffer.
      */
     public ByteBuffer getData() {
-        return JNI.wrap(WaylandServerCore.INSTANCE()
-                                         .wl_shm_buffer_get_data(this.pointer),
-                        getHeight() * getStride());
+        MemorySegment data = C.wl_shm_buffer_get_data(this.pointer);
+        return data.asByteBuffer();
     }
 
     public int getHeight() {
-        return WaylandServerCore.INSTANCE()
-                                .wl_shm_buffer_get_height(this.pointer);
+        return C.wl_shm_buffer_get_height(this.pointer);
     }
 
     public int getStride() {
-        return WaylandServerCore.INSTANCE()
-                                .wl_shm_buffer_get_stride(this.pointer);
+        return C.wl_shm_buffer_get_stride(this.pointer);
     }
 
     public int getFormat() {
-        return WaylandServerCore.INSTANCE()
-                                .wl_shm_buffer_get_format(this.pointer);
+        return C.wl_shm_buffer_get_format(this.pointer);
     }
 
     public int getWidth() {
-        return WaylandServerCore.INSTANCE()
-                                .wl_shm_buffer_get_width(this.pointer);
+        return C.wl_shm_buffer_get_width(this.pointer);
     }
 
     @Override
@@ -171,11 +166,9 @@ public class ShmBuffer {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof ShmBuffer)) {
+        if (!(o instanceof ShmBuffer shmBuffer)) {
             return false;
         }
-
-        final ShmBuffer shmBuffer = (ShmBuffer) o;
 
         return this.pointer.equals(shmBuffer.pointer);
 

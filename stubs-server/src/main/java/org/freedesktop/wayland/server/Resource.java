@@ -1,28 +1,28 @@
-//Copyright 2015 Erik De Rijcke
-//
-//Licensed under the Apache License,Version2.0(the"License");
-//you may not use this file except in compliance with the License.
-//You may obtain a copy of the License at
-//
-//http://www.apache.org/licenses/LICENSE-2.0
-//
-//Unless required by applicable law or agreed to in writing,software
-//distributed under the License is distributed on an"AS IS"BASIS,
-//WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
-//See the License for the specific language governing permissions and
-//limitations under the License.
+/*
+ * Copyright © 2015 Erik De Rijcke
+ * Copyright © 2024 Casey Link
+ *
+ * Licensed under the Apache License,Version2.0(the"License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,software
+ * distributed under the License is distributed on an"AS IS"BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ */
 package org.freedesktop.wayland.server;
 
-import org.freedesktop.jaccall.Pointer;
-import org.freedesktop.wayland.server.jaccall.Pointerwl_resource_destroy_func_t;
-import org.freedesktop.wayland.server.jaccall.WaylandServerCore;
-import org.freedesktop.wayland.server.jaccall.wl_resource_destroy_func_t;
-import org.freedesktop.wayland.util.Arguments;
-import org.freedesktop.wayland.util.Dispatcher;
-import org.freedesktop.wayland.util.InterfaceMeta;
-import org.freedesktop.wayland.util.ObjectCache;
-import org.freedesktop.wayland.util.WaylandObject;
+import org.freedesktop.wayland.C;
+import org.freedesktop.wayland.util.*;
+import org.freedesktop.wayland.wl_resource_destroy_func_t;
 
+import java.lang.foreign.MemorySegment;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -33,74 +33,73 @@ import java.util.Set;
  */
 public abstract class Resource<I> implements WaylandObject {
 
-    private static final Pointer<wl_resource_destroy_func_t> RESOURCE_DESTROY_FUNC = Pointerwl_resource_destroy_func_t.nref((wl_resource_destroy_func_t) resourcePointer -> {
-        final Resource<?> resource = ObjectCache.from(resourcePointer);
-        resource.notifyDestroyListeners();
-        resource.destroyListeners.clear();
-        ObjectCache.remove(resourcePointer);
+    private static final MemorySegment RESOURCE_DESTROY_FUNC;
 
-        resource.jObjectPointer.close();
-    });
+    static {
+        RESOURCE_DESTROY_FUNC = wl_resource_destroy_func_t.allocate((resourcePointer) -> {
+                    final Resource<?> resource = ObjectCache.from(resourcePointer);
+                    resource.notifyDestroyListeners();
+                    resource.destroyListeners.clear();
+                    ObjectCache.remove(resourcePointer);
+                    GlobalRef.remove(resource.jObjectRef);
+                },
+                Memory.ARENA_AUTO
+        );
+    }
 
-    public final  Long pointer;
-    private final I    implementation;
+    public final MemorySegment wlResourcePtr;
+    private final I implementation;
     private final Set<DestroyListener> destroyListeners = new HashSet<>();
-
-    private final Pointer<Object> jObjectPointer;
+    private final MemorySegment jObjectRef;
 
     protected Resource(final Client client,
                        final int version,
                        final int id,
                        final I implementation) {
         this.implementation = implementation;
-        final long resourcePointer = WaylandServerCore.INSTANCE()
-                                                      .wl_resource_create(client.pointer,
-                                                                          InterfaceMeta.get(getClass())
-                                                                                       .getNative().address,
-                                                                          version,
-                                                                          id);
-        this.pointer = resourcePointer;
-        ObjectCache.store(this.pointer,
-                          this);
+        this.wlResourcePtr = C.wl_resource_create(
+                client.pointer,
+                InterfaceMeta.get(getClass()).getNativeWlInterface(),
+                version,
+                id);
+        ObjectCache.store(this.wlResourcePtr, this);
+        this.jObjectRef = GlobalRef.from(this);
 
-        this.jObjectPointer = Pointer.from(this);
-
-        WaylandServerCore.INSTANCE()
-                         .wl_resource_set_dispatcher(resourcePointer,
-                                                     Dispatcher.INSTANCE.address,
-                                                     this.jObjectPointer.address,
-                                                     0L,
-                                                     RESOURCE_DESTROY_FUNC.address);
+        C.wl_resource_set_dispatcher(
+                this.wlResourcePtr,
+                Dispatcher.INSTANCE,
+                jObjectRef,
+                MemorySegment.NULL,
+                RESOURCE_DESTROY_FUNC
+        );
     }
 
-    //TODO add static get(Pointer) method for each generated resource
-    //TODO wl_resource_post_no_memory
-    //TODO wl_resource_queue_event_array
-    //TODO wl_resource_queue_event
+    // TODO add static get(Pointer) method for each generated resource
+    // TODO wl_resource_post_no_memory
+    // TODO wl_resource_queue_event_array
+    // TODO wl_resource_queue_event
 
-    protected Resource(final Long pointer) {
-        this.jObjectPointer = Pointer.from(this);
-        this.pointer = pointer;
-        this.implementation = null;
-        addDestroyListener(new Listener() {
-            @Override
-            public void handle() {
-                notifyDestroyListeners();
-                Resource.this.destroyListeners.clear();
-                ObjectCache.remove(Resource.this.pointer);
-                Resource.this.jObjectPointer.close();
-
-                free();
-            }
-        });
-        ObjectCache.store(pointer,
-                          this);
-    }
+//    protected Resource(final Long pointer) {
+//        this.jObjectRef = Pointer.from(this);
+//        this.pointer = pointer;
+//        this.implementation = null;
+//        addDestroyListener(new Listener() {
+//            @Override
+//            public void handle() {
+//                notifyDestroyListeners();
+//                Resource.this.destroyListeners.clear();
+//                ObjectCache.remove(Resource.this.pointer);
+//                Resource.this.jObjectRef.close();
+//
+//                free();
+//            }
+//        });
+//        ObjectCache.store(pointer,
+//                this);
+//    }
 
     protected void addDestroyListener(final Listener listener) {
-        WaylandServerCore.INSTANCE()
-                         .wl_resource_add_destroy_listener(this.pointer,
-                                                           listener.pointer.address);
+        C.wl_resource_add_destroy_listener(this.wlResourcePtr, listener.wlListenerPointer);
     }
 
     private void notifyDestroyListeners() {
@@ -114,18 +113,17 @@ public abstract class Resource<I> implements WaylandObject {
     }
 
     public Client getClient() {
-        return Client.get(WaylandServerCore.INSTANCE()
-                                           .wl_resource_get_client(this.pointer));
+        return Client.get(
+                C.wl_resource_get_client(this.wlResourcePtr)
+        );
     }
 
     public int getId() {
-        return WaylandServerCore.INSTANCE()
-                                .wl_resource_get_id(this.pointer);
+        return C.wl_resource_get_id(this.wlResourcePtr);
     }
 
     public int getVersion() {
-        return WaylandServerCore.INSTANCE()
-                                .wl_resource_get_version(this.pointer);
+        return C.wl_resource_get_version(this.wlResourcePtr);
     }
 
     public void register(final DestroyListener destroyListener) {
@@ -159,36 +157,28 @@ public abstract class Resource<I> implements WaylandObject {
      */
     public void postEvent(final int opcode,
                           final Arguments args) {
-        WaylandServerCore.INSTANCE()
-                         .wl_resource_post_event_array(this.pointer,
-                                                       opcode,
-                                                       args.pointer.address);
-        args.pointer.close();
+        C.wl_resource_post_event_array(this.wlResourcePtr, opcode, args.pointer);
+        // TODO deallocate the arguments array here
+//        args.pointer.close();
     }
 
     /**
      * @param opcode the protocol opcode
-     *
      * @see #postEvent(int, org.freedesktop.wayland.util.Arguments)
      */
     public void postEvent(final int opcode) {
-        WaylandServerCore.INSTANCE()
-                         .wl_resource_post_event_array(this.pointer,
-                                                       opcode,
-                                                       0L);
+        C.wl_resource_post_event_array(this.wlResourcePtr, opcode, MemorySegment.NULL);
     }
 
     public void postError(final int code,
                           final String msg) {
-        WaylandServerCore.INSTANCE()
-                         .wl_resource_post_error(this.pointer,
-                                                 code,
-                                                 Pointer.nref(msg).address);
+        C.wl_resource_post_error invoker = C.wl_resource_post_error.makeInvoker(C.C_POINTER);
+        invoker.apply(this.wlResourcePtr, code, Memory.ARENA_AUTO.allocateFrom(msg));
     }
 
     @Override
     public int hashCode() {
-        return this.pointer.hashCode();
+        return this.wlResourcePtr.hashCode();
     }
 
     @Override
@@ -202,16 +192,15 @@ public abstract class Resource<I> implements WaylandObject {
 
         final Resource resource = (Resource) o;
 
-        return this.pointer.equals(resource.pointer);
+        return this.wlResourcePtr.equals(resource.wlResourcePtr);
     }
 
     public void destroy() {
-        WaylandServerCore.INSTANCE()
-                         .wl_resource_destroy(this.pointer);
+        C.wl_resource_destroy(this.wlResourcePtr);
     }
 
     @Override
-    public Long getPointer() {
-        return this.pointer;
+    public MemorySegment getPointer() {
+        return this.wlResourcePtr;
     }
 }

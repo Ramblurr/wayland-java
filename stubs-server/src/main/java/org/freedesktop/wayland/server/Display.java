@@ -1,36 +1,38 @@
-//Copyright 2015 Erik De Rijcke
-//
-//Licensed under the Apache License,Version2.0(the"License");
-//you may not use this file except in compliance with the License.
-//You may obtain a copy of the License at
-//
-//http://www.apache.org/licenses/LICENSE-2.0
-//
-//Unless required by applicable law or agreed to in writing,software
-//distributed under the License is distributed on an"AS IS"BASIS,
-//WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
-//See the License for the specific language governing permissions and
-//limitations under the License.
+/*
+ * Copyright © 2015 Erik De Rijcke
+ * Copyright © 2024 Casey Link
+ *
+ * Licensed under the Apache License,Version2.0(the"License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,software
+ * distributed under the License is distributed on an"AS IS"BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ */
 package org.freedesktop.wayland.server;
 
-import org.freedesktop.jaccall.Pointer;
-import org.freedesktop.wayland.server.jaccall.WaylandServerCore;
+import org.freedesktop.wayland.C;
+import org.freedesktop.wayland.util.Memory;
 import org.freedesktop.wayland.util.ObjectCache;
 
+import java.lang.foreign.MemorySegment;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.freedesktop.jaccall.Pointer.nref;
-import static org.freedesktop.jaccall.Pointer.wrap;
-
 public class Display {
-
     public static final int OBJECT_ID = 1;
 
-    public final Long pointer;
+    public final MemorySegment pointer;
     private final Set<DestroyListener> destroyListeners = new HashSet<>();
 
-    protected Display(final Long pointer) {
+    protected Display(final MemorySegment pointer) {
         this.pointer = pointer;
         addDestroyListener(new Listener() {
             @Override
@@ -38,17 +40,15 @@ public class Display {
                 notifyDestroyListeners();
                 Display.this.destroyListeners.clear();
                 ObjectCache.remove(Display.this.pointer);
-                free();
+                destroy();
             }
         });
         ObjectCache.store(this.pointer,
-                          this);
+                this);
     }
 
     protected void addDestroyListener(final Listener listener) {
-        WaylandServerCore.INSTANCE()
-                         .wl_display_add_destroy_listener(this.pointer,
-                                                          listener.pointer.address);
+        C.wl_display_add_destroy_listener(this.pointer, listener.wlListenerPointer);
     }
 
     private void notifyDestroyListeners() {
@@ -63,12 +63,11 @@ public class Display {
      * @return The Wayland display object. Null if failed to create
      */
     public static Display create() {
-        return Display.get(WaylandServerCore.INSTANCE()
-                                            .wl_display_create());
+        return Display.get(C.wl_display_create());
     }
 
-    public static Display get(final long pointer) {
-        if (pointer == 0L) {
+    public static Display get(final MemorySegment pointer) {
+        if (pointer == MemorySegment.NULL) {
             return null;
         }
         Display display = ObjectCache.from(pointer);
@@ -89,35 +88,30 @@ public class Display {
      * already in use.
      *
      * @param name Name of the Unix socket.
-     *
      * @return 0 if success. -1 if failed.
      */
 
     public int addSocket(final String name) {
-        return WaylandServerCore.INSTANCE()
-                                .wl_display_add_socket(this.pointer,
-                                                       nref(name).address);
+        return C.wl_display_add_socket(this.pointer, Memory.ARENA_AUTO.allocateFrom(name));
     }
 
     public String addSocketAuto() {
-        return wrap(String.class,
-                    WaylandServerCore.INSTANCE()
-                                     .wl_display_add_socket_auto(this.pointer)).get();
+        var namePtr = C.wl_display_add_socket_auto(this.pointer);
+        if (namePtr != MemorySegment.NULL)
+            return namePtr.getString(0);
+        throw new RuntimeException("wl_display_add_socket_auto failed");
     }
 
     public void terminate() {
-        WaylandServerCore.INSTANCE()
-                         .wl_display_terminate(this.pointer);
+        C.wl_display_terminate(this.pointer);
     }
 
     public void run() {
-        WaylandServerCore.INSTANCE()
-                         .wl_display_run(this.pointer);
+        C.wl_display_run(this.pointer);
     }
 
     public void flushClients() {
-        WaylandServerCore.INSTANCE()
-                         .wl_display_flush_clients(this.pointer);
+        C.wl_display_flush_clients(this.pointer);
     }
 
     /**
@@ -125,21 +119,18 @@ public class Display {
      * it.
      */
     public int getSerial() {
-        return WaylandServerCore.INSTANCE()
-                                .wl_display_get_serial(this.pointer);
+        return C.wl_display_get_serial(this.pointer);
     }
 
     /**
      * Get the next serial number <p> This function increments the display serial number and returns the new value.
      */
     public int nextSerial() {
-        return WaylandServerCore.INSTANCE()
-                                .wl_display_next_serial(this.pointer);
+        return C.wl_display_next_serial(this.pointer);
     }
 
     public EventLoop getEventLoop() {
-        return EventLoop.get(WaylandServerCore.INSTANCE()
-                                              .wl_display_get_event_loop(this.pointer));
+        return EventLoop.get(C.wl_display_get_event_loop(this.pointer));
     }
 
     public void register(final DestroyListener destroyListener) {
@@ -151,8 +142,7 @@ public class Display {
     }
 
     public int initShm() {
-        return WaylandServerCore.INSTANCE()
-                                .wl_display_init_shm(this.pointer);
+        return C.wl_display_init_shm(this.pointer);
     }
 
     /**
@@ -163,15 +153,13 @@ public class Display {
      * and WL_SHM_FORMAT_XRGB8888. <p>
      *
      * @param format The wl_shm pixel format to advertise
-     *
-     * @return A pointer to the wl_shm format that was added to the list or NULL if adding it to the list failed.
+     * @return The wl_shm format that was added to the list or 0 if adding it to the list failed.
      */
     public int addShmFormat(final int format) {
-        final Pointer<Integer> formatPointer = wrap(Integer.class,
-                                                    WaylandServerCore.INSTANCE()
-                                                                     .wl_display_add_shm_format(this.pointer,
-                                                                                                format));
-        return formatPointer.address == 0L ? 0 : formatPointer.get();
+        var ret = C.wl_display_add_shm_format(this.pointer, format);
+        if (ret == MemorySegment.NULL)
+            return 0;
+        return ret.get(C.C_INT, 0);
     }
 
     @Override
@@ -205,7 +193,6 @@ public class Display {
      * @see #addDestroyListener(Listener)
      */
     public void destroy() {
-        WaylandServerCore.INSTANCE()
-                         .wl_display_destroy(this.pointer);
+        C.wl_display_destroy(this.pointer);
     }
 }

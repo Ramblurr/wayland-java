@@ -1,26 +1,37 @@
-//Copyright 2015 Erik De Rijcke
-//
-//Licensed under the Apache License,Version2.0(the"License");
-//you may not use this file except in compliance with the License.
-//You may obtain a copy of the License at
-//
-//http://www.apache.org/licenses/LICENSE-2.0
-//
-//Unless required by applicable law or agreed to in writing,software
-//distributed under the License is distributed on an"AS IS"BASIS,
-//WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
-//See the License for the specific language governing permissions and
-//limitations under the License.
+/*
+ * Copyright © 2015 Erik De Rijcke
+ * Copyright © 2024 Casey Link
+ *
+ * Licensed under the Apache License,Version2.0(the"License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,software
+ * distributed under the License is distributed on an"AS IS"BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ */
 package org.freedesktop.wayland.server;
 
-import org.freedesktop.jaccall.Pointer;
-import org.freedesktop.wayland.server.jaccall.Pointerwl_notify_func_t;
-import org.freedesktop.wayland.server.jaccall.WaylandServerCore;
-import org.freedesktop.wayland.server.jaccall.wl_listener;
-import org.freedesktop.wayland.server.jaccall.wl_notify_func_t;
+import org.freedesktop.wayland.C;
+import org.freedesktop.wayland.util.Memory;
 import org.freedesktop.wayland.util.ObjectCache;
+import org.freedesktop.wayland.wl_listener;
+import org.slf4j.LoggerFactory;
 
-import static org.freedesktop.jaccall.Pointer.ref;
+import java.lang.foreign.Arena;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.Linker;
+import java.lang.foreign.MemorySegment;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+
+//import static org.freedesktop.jaccall.Pointer.ref;
 
 /**
  * A single listener for Wayland signals
@@ -36,39 +47,81 @@ import static org.freedesktop.jaccall.Pointer.ref;
  * only listen to one signal at a time.
  */
 abstract class Listener {
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(EventLoop.class);
+    private static final MemorySegment WL_NOTIFY_FUNC;
 
-    private static final Pointer<wl_notify_func_t> WL_NOTIFY_FUNC = Pointerwl_notify_func_t.nref((wl_notify_func_t) (listenerPointer, data) -> {
-        final Listener listener = ObjectCache.from(listenerPointer);
-        listener.handle();
-    });
+    static {
+        try {
+            WL_NOTIFY_FUNC = Linker.nativeLinker().upcallStub(
+                    MethodHandles
+                            .lookup()
+                            .findStatic(Listener.class,
+                                    "listenerNativeCallback",
+                                    MethodType.methodType(void.class, MemorySegment.class, MemorySegment.class)),
+                    FunctionDescriptor.ofVoid(C.C_POINTER, C.C_POINTER),
+                    Memory.ARENA_AUTO
+            );
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-    public final Pointer<wl_listener> pointer;
+    private final Arena arena;
+    private boolean destroyed = false;
+
+    public static void listenerNativeCallback(MemorySegment listenerPointer, MemorySegment data) {
+        try {
+            final Listener listener = ObjectCache.from(listenerPointer);
+            listener.handle();
+        } catch (Throwable t) {
+            LOG.error("Exception in wayland Listener callback", t);
+        }
+    }
+
+    public final MemorySegment wlListenerPointer;
+
+    @FunctionalInterface
+    public interface ListenerCallback {
+        void handle();
+    }
+
+    public static Listener create(ListenerCallback callback) {
+        return new Listener() {
+            @Override
+            public void handle() {
+                callback.handle();
+            }
+        };
+    }
 
     public Listener() {
-        this.pointer = Pointer.malloc(wl_listener.SIZE,
-                                      wl_listener.class);
-        this.pointer.get()
-                    .setNotify$(WL_NOTIFY_FUNC);
-        ObjectCache.store(this.pointer.address,
-                          this);
+        this.arena = Arena.ofShared();
+        this.wlListenerPointer = wl_listener.allocate(arena);
+        wl_listener.notify(this.wlListenerPointer,
+                WL_NOTIFY_FUNC
+        );
+        ObjectCache.store(this.wlListenerPointer, this);
     }
 
     public void remove() {
-        WaylandServerCore.INSTANCE()
-                         .wl_list_remove(ref(this.pointer.get()
-                                                         .link()).address);
+        C.wl_list_remove(wl_listener.link(this.wlListenerPointer));
     }
 
-    public void free() {
-        ObjectCache.remove(this.pointer.address);
-        this.pointer.close();
+    public void destroy() {
+        ObjectCache.remove(this.wlListenerPointer);
+        arena.close();
+        destroyed = true;
+    }
+
+    public boolean isDestroyed() {
+        return destroyed;
     }
 
     public abstract void handle();
 
     @Override
     public int hashCode() {
-        return new Long(this.pointer.address).hashCode();
+        return this.wlListenerPointer.hashCode();
     }
 
     @Override
@@ -82,7 +135,7 @@ abstract class Listener {
 
         final Listener listener = (Listener) o;
 
-        return this.pointer.address == listener.pointer.address;
+        return this.wlListenerPointer == listener.wlListenerPointer;
     }
 }
 
