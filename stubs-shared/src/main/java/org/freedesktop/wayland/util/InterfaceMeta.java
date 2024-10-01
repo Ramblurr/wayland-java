@@ -50,49 +50,47 @@ public class InterfaceMeta {
      * Scans this type for {@link Interface} annotations and creates a native context if possible.
      *
      * @param type Any Java type.
-     * @return The associated {@link InterfaceMeta} or {@link #NO_INTERFACE} if the type does not have a wayland interface
+     * @return The associated {@link InterfaceMeta} or {@link InterfaceMeta#NO_INTERFACE} if the type does not have a wayland interface
      * associated with it.
      */
     public static InterfaceMeta get(final Class<?> type) {
         InterfaceMeta interfaceMeta = INTERFACE_MAP.get(type);
         if (interfaceMeta == null) {
-            final Interface waylandInterface = type.getAnnotation(Interface.class);
-            if (waylandInterface == null) {
-                interfaceMeta = NO_INTERFACE;
-            } else {
-                interfaceMeta = create(waylandInterface.name(),
-                        waylandInterface.version(),
-                        waylandInterface.methods(),
-                        waylandInterface.events());
-            }
-            INTERFACE_MAP.put(type,
-                    interfaceMeta);
+            interfaceMeta = maybeCreate(type);
         }
         return interfaceMeta;
     }
 
-    protected static InterfaceMeta create(final String name,
-                                          final int version,
-                                          final Message[] methods,
-                                          final Message[] events) {
-        // TODO audit arena usage here
-        MemorySegment wl_interface_ptr = wl_interface.allocate(Memory.ARENA_AUTO);
-        wl_interface.name(wl_interface_ptr, Memory.ARENA_AUTO.allocateFrom(name));
-        wl_interface.version(wl_interface_ptr, version);
-        wl_interface.method_count(wl_interface_ptr, methods.length);
-        wl_interface.event_count(wl_interface_ptr, events.length);
-        wl_interface.methods(wl_interface_ptr, MessageMeta.initArray(methods, Memory.ARENA_AUTO));
-        wl_interface.events(wl_interface_ptr, MessageMeta.initArray(events, Memory.ARENA_AUTO));
-        return InterfaceMeta.get(wl_interface_ptr);
+    private static void initialize(InterfaceMeta interfaceMeta, Interface waylandInterface) {
+        var wl_interface_ptr = interfaceMeta.wlInterfacePointer;
+        wl_interface.name(wl_interface_ptr, Memory.ARENA_AUTO.allocateFrom(waylandInterface.name()));
+        wl_interface.version(wl_interface_ptr, waylandInterface.version());
+        wl_interface.method_count(wl_interface_ptr, waylandInterface.methods().length);
+        wl_interface.event_count(wl_interface_ptr, waylandInterface.events().length);
+        wl_interface.methods(wl_interface_ptr, MessageMeta.initArray(waylandInterface.methods(), Memory.ARENA_AUTO));
+        wl_interface.events(wl_interface_ptr, MessageMeta.initArray(waylandInterface.events(), Memory.ARENA_AUTO));
     }
 
-    public static InterfaceMeta get(MemorySegment pointer) {
-        InterfaceMeta interfaceMeta = ObjectCache.from(pointer);
-        if (interfaceMeta == null) {
-            interfaceMeta = new InterfaceMeta(pointer);
+    protected static InterfaceMeta maybeCreate(Class<?> type) {
+        final Interface waylandInterface = type.getAnnotation(Interface.class);
+        if (waylandInterface == null) {
+            INTERFACE_MAP.put(type, NO_INTERFACE);
+            return NO_INTERFACE;
+        } else {
+            /*
+              Some interfaces are self referential.
+              For example the `xdg_toplevel` interface has a Message that references `xdg_toplevel` itself.
+              So we create a class name -> native pointer mapping right away
+              and then initialize the interface fields, which in turn intializes the methods and events which
+              might need to reference the interface we just created.
+             */
+            var interfaceMeta = new InterfaceMeta(wl_interface.allocate(Memory.ARENA_AUTO));
+            INTERFACE_MAP.put(type, interfaceMeta);
+            initialize(interfaceMeta, waylandInterface);
+            return interfaceMeta;
         }
-        return interfaceMeta;
     }
+
 
     public String getName() {
         return wl_interface.name(this.wlInterfacePointer).getString(0);

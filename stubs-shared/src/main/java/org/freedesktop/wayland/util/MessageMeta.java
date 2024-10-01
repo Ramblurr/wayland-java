@@ -56,7 +56,6 @@ public class MessageMeta {
     }
 
     public static MessageMeta init(final MemorySegment wlMessagePointer, final Message message) {
-        // TODO audit arena usage here
         wl_message.name(wlMessagePointer, Memory.ARENA_AUTO.allocateFrom(message.name()));
         wl_message.signature(wlMessagePointer, Memory.ARENA_AUTO.allocateFrom(message.signature()));
         MemorySegment typesArray = PointerArray.fromStream(Stream.of(message.types()),

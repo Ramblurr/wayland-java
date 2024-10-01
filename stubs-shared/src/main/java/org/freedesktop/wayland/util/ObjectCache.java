@@ -43,7 +43,8 @@ public class ObjectCache {
      * @return The cached object.
      */
     public static <T> T from(final MemorySegment pointer) {
-
+        if (MemorySegment.NULL.equals(pointer))
+            return null;
         return (T) MAPPED_OBJECTS.get(pointer);
     }
 
@@ -57,6 +58,7 @@ public class ObjectCache {
                              final Object object) {
         if (MemorySegment.NULL.equals(pointer)) {
             LOG.warn("Adding NULL MemorySegment to ObjectCache s={}", pointer);
+            return;
         }
         final Object oldValue = MAPPED_OBJECTS.put(pointer, object);
         if (oldValue != null) {
