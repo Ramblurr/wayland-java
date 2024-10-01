@@ -15,38 +15,47 @@
  * limitations under the License.
  *
  *
+ *
  */
 package org.freedesktop.wayland.examples;
 
 import org.freedesktop.wayland.client.*;
 import org.freedesktop.wayland.shared.WlPointerButtonState;
 import org.freedesktop.wayland.shared.WlShellSurfaceResize;
+import org.freedesktop.wayland.shared.XdgToplevelWmCapabilities;
 import org.freedesktop.wayland.util.Fixed;
+import org.freedesktop.wayland.util.WlArray;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.IntBuffer;
+import java.util.List;
+import java.util.Objects;
 
 import static org.freedesktop.wayland.shared.WlShmFormat.XRGB8888;
 
-public class Window implements WlShellSurfaceEvents,
-        WlSurfaceEventsV3,
+public class Window implements WlSurfaceEventsV3,
+        XdgSurfaceEventsV6,
         WlPointerEventsV3,
-        WlRegionEvents {
+        WlRegionEvents, XdgToplevelEventsV5 {
 
     private static final int BTN_LEFT = 0x110;
     private static final int BTN_RIGHT = 0x111;
 
-    private final WlShellSurfaceProxy shellSurfaceProxy;
+    //    private final WlShellSurfaceProxy shellSurfaceProxy;
+    private final XdgSurfaceProxy xdgSurfaceProxy;
 
     private final WlSurfaceProxy surfaceProxy;
     private final Display display;
     private final WlPointerProxy pointerProxy;
+    private final XdgToplevelProxy xdgToplevelProxy;
 
     private WlCallbackProxy callbackProxy;
     private BufferPool bufferPool;
 
     private boolean needsBufferPoolUpdate;
+
+    private boolean waitForConfigure = false;
 
     private int width;
     private int height;
@@ -58,6 +67,8 @@ public class Window implements WlShellSurfaceEvents,
 
     private int pointerX;
     private int pointerY;
+    private boolean maximized;
+    private boolean fullscreen;
 
     public Window(final Display display,
                   final int width,
@@ -70,9 +81,9 @@ public class Window implements WlShellSurfaceEvents,
         this.surfaceProxy = this.display
                 .getCompositorProxy()
                 .createSurface(this);
-        this.shellSurfaceProxy = this.display
-                .getShellProxy()
-                .getShellSurface(this, this.surfaceProxy);
+        Objects.requireNonNull(this.display.getXdgWmBaseProxy());
+        this.xdgSurfaceProxy = this.display.getXdgWmBaseProxy()
+                .getXdgSurface(this, this.surfaceProxy);
         this.pointerProxy = this.display
                 .getSeatProxy()
                 .getPointer(this);
@@ -81,6 +92,14 @@ public class Window implements WlShellSurfaceEvents,
                 0,
                 this.width,
                 this.height);
+
+
+        Objects.requireNonNull(this.xdgSurfaceProxy);
+        this.xdgToplevelProxy = this.xdgSurfaceProxy.getToplevel(this);
+        this.xdgToplevelProxy.setTitle("simple-shm");
+        this.xdgToplevelProxy.setAppId("org.freedesktop.wayland.examples.simple-shm");
+        this.surfaceProxy.commit();
+        this.waitForConfigure = true;
     }
 
     private BufferPool createBufferPool(final Display display,
@@ -139,14 +158,11 @@ public class Window implements WlShellSurfaceEvents,
 //                                         state));
 
         final boolean buttonPressed = state == WlPointerButtonState.PRESSED.value;
-        if (buttonPressed && button == BTN_LEFT) {
-            this.shellSurfaceProxy.move(this.display.getSeatProxy(),
-                    serial);
-        } else if (buttonPressed && button == BTN_RIGHT) {
-            this.shellSurfaceProxy.resize(this.display.getSeatProxy(),
-                    serial,
-                    edge().value);
-        }
+//        if (buttonPressed && button == BTN_LEFT) {
+//            this.shellSurfaceProxy.move(this.display.getSeatProxy(), serial);
+//        } else if (buttonPressed && button == BTN_RIGHT) {
+//            this.shellSurfaceProxy.resize(this.display.getSeatProxy(), serial, edge().value);
+//        }
     }
 
     private WlShellSurfaceResize edge() {
@@ -176,29 +192,34 @@ public class Window implements WlShellSurfaceEvents,
     }
 
     @Override
-    public void ping(final WlShellSurfaceProxy emitter,
-                     final int serial) {
+    public void configure(XdgSurfaceProxy emitter, int serial) {
+        this.redraw(0);
+    }
+
+
+//    @Override
+//    public void ping(final WlShellSurfaceProxy emitter,
+//                     final int serial) {
 //        System.out.println(String.format("shell surface - ping : serial=%d",
 //                                         serial));
 
-        emitter.pong(serial);
-    }
+//        emitter.pong(serial);
+//    }
+//
+//    @Override
+//    public void configure(final WlShellSurfaceProxy emitter,
+//                          final int edges,
+//                          int width,
+//                          int height) {
+//        this.edges = edges;
+//        this.pendingWidth = width;
+//        this.pendingHeight = height;
+//        this.needsBufferPoolUpdate = true;
+//    }
 
-    @Override
-    public void configure(final WlShellSurfaceProxy emitter,
-                          final int edges,
-                          int width,
-                          int height) {
-        this.edges = edges;
-        this.pendingWidth = width;
-        this.pendingHeight = height;
-        this.needsBufferPoolUpdate = true;
-    }
-
-    @Override
-    public void popupDone(final WlShellSurfaceProxy emitter) {
-
-    }
+//    @Override
+//    public void popupDone(final WlShellSurfaceProxy emitter) {
+//    }
 
     @Override
     public void enter(final WlSurfaceProxy emitter,
@@ -213,7 +234,7 @@ public class Window implements WlShellSurfaceEvents,
     }
 
     public void destroy() {
-        this.shellSurfaceProxy.destroy();
+        this.xdgSurfaceProxy.destroy();
         this.surfaceProxy.destroy();
         this.pointerProxy.destroy();
         if (callbackProxy != null) {
@@ -312,8 +333,7 @@ public class Window implements WlShellSurfaceEvents,
             }
         }
 
-        paintPixels(buffer,
-                time);
+        paintPixels(buffer, time);
 
         this.surfaceProxy.attach(wlBufferProxy,
                 dx,
@@ -336,6 +356,33 @@ public class Window implements WlShellSurfaceEvents,
         });
 
         this.surfaceProxy.commit();
+    }
+
+    @Override
+    public void configure(XdgToplevelProxy emitter, int width, int height, @Nonnull WlArray states) {
+        this.fullscreen = false;
+        this.maximized = false;
+        this.pendingWidth = width;
+        this.pendingHeight = height;
+        this.needsBufferPoolUpdate = true;
+
+    }
+
+    @Override
+    public void close(XdgToplevelProxy emitter) {
+
+    }
+
+    @Override
+    public void configureBounds(XdgToplevelProxy emitter, int width, int height) {
+    }
+
+    @Override
+    public void wmCapabilities(XdgToplevelProxy emitter, @Nonnull WlArray capabilities) {
+        List<XdgToplevelWmCapabilities> caps = WlArray.asEnum(capabilities, XdgToplevelWmCapabilities.class);
+        for (XdgToplevelWmCapabilities cap : caps) {
+            System.out.println("got cap " + cap);
+        }
     }
 }
 

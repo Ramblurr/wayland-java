@@ -23,6 +23,8 @@
  */
 package org.freedesktop.wayland.examples;
 
+import org.freedesktop.wayland.shared.XdgToplevelWmCapabilities;
+
 import java.io.IOException;
 
 public class SimpleShm {

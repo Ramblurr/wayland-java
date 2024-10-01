@@ -15,37 +15,26 @@
  * limitations under the License.
  *
  *
+ *
  */
 
 package org.freedesktop.wayland.examples;
 
-import org.freedesktop.wayland.client.WlCompositorEvents;
-import org.freedesktop.wayland.client.WlCompositorEventsV3;
-import org.freedesktop.wayland.client.WlCompositorProxy;
-import org.freedesktop.wayland.client.WlDisplayProxy;
-import org.freedesktop.wayland.client.WlRegistryEvents;
-import org.freedesktop.wayland.client.WlRegistryProxy;
-import org.freedesktop.wayland.client.WlSeatEvents;
-import org.freedesktop.wayland.client.WlSeatEventsV3;
-import org.freedesktop.wayland.client.WlSeatProxy;
-import org.freedesktop.wayland.client.WlShellEvents;
-import org.freedesktop.wayland.client.WlShellProxy;
-import org.freedesktop.wayland.client.WlShmEvents;
-import org.freedesktop.wayland.client.WlShmProxy;
+import org.freedesktop.wayland.client.*;
 
 import javax.annotation.Nonnull;
 
 public class Display {
 
-    private final WlDisplayProxy  displayProxy;
+    private final WlDisplayProxy displayProxy;
     private final WlRegistryProxy registryProxy;
 
     private int shmFormats = 0;
 
     private WlCompositorProxy compositorProxy;
-    private WlShmProxy        shmProxy;
-    private WlSeatProxy       seatProxy;
-    private WlShellProxy      shellProxy;
+    private WlShmProxy shmProxy;
+    private WlSeatProxy seatProxy;
+    private XdgWmBaseProxy xdgWmBaseProxy;
 
 
     public Display() {
@@ -82,15 +71,15 @@ public class Display {
                         final int name,
                         final String interfaceName,
                         final int version) {
+        System.out.printf("Loading: name=%d ifaceName=%s version=%d%n", name, interfaceName, version);
         if (WlCompositorProxy.INTERFACE_NAME.equals(interfaceName)) {
             this.compositorProxy = this.registryProxy.<WlCompositorEvents, WlCompositorProxy>bind(name,
                     WlCompositorProxy.class,
                     WlCompositorEventsV3.VERSION,
                     new WlCompositorEventsV3() {
                     });
-        }
-        else if (WlShmProxy.INTERFACE_NAME.equals(interfaceName)) {
-            this.shmProxy = this.registryProxy.<WlShmEvents, WlShmProxy>bind(name,
+        } else if (WlShmProxy.INTERFACE_NAME.equals(interfaceName)) {
+            this.shmProxy = this.registryProxy.bind(name,
                     WlShmProxy.class,
                     WlShmEvents.VERSION,
                     new WlShmEvents() {
@@ -100,15 +89,17 @@ public class Display {
                             Display.this.shmFormats |= (1 << format);
                         }
                     });
-        }
-        else if (WlShellProxy.INTERFACE_NAME.equals(interfaceName)) {
-            this.shellProxy = this.registryProxy.<WlShellEvents, WlShellProxy>bind(name,
-                    WlShellProxy.class,
-                    WlShellEvents.VERSION,
-                    new WlShellEvents() {
+        } else if (XdgWmBaseProxy.INTERFACE_NAME.equals(interfaceName)) {
+            this.xdgWmBaseProxy = this.registryProxy.bind(name,
+                    XdgWmBaseProxy.class,
+                    XdgWmBaseEventsV6.VERSION,
+                    new XdgWmBaseEventsV6() {
+                        @Override
+                        public void ping(XdgWmBaseProxy emitter, int serial) {
+                            emitter.pong(serial);
+                        }
                     });
-        }
-        else if (WlSeatProxy.INTERFACE_NAME.equals(interfaceName)) {
+        } else if (WlSeatProxy.INTERFACE_NAME.equals(interfaceName)) {
             this.seatProxy = this.registryProxy.<WlSeatEvents, WlSeatProxy>bind(name,
                     WlSeatProxy.class,
                     WlSeatEventsV3.VERSION,
@@ -137,8 +128,8 @@ public class Display {
         if (this.shmProxy != null) {
             this.shmProxy.destroy();
         }
-        if (this.shellProxy != null) {
-            this.shellProxy.destroy();
+        if (this.xdgWmBaseProxy != null) {
+            this.xdgWmBaseProxy.destroy();
         }
 
         this.compositorProxy.destroy();
@@ -163,8 +154,8 @@ public class Display {
         return this.seatProxy;
     }
 
-    public WlShellProxy getShellProxy() {
-        return this.shellProxy;
+    public XdgWmBaseProxy getXdgWmBaseProxy() {
+        return this.xdgWmBaseProxy;
     }
 }
 

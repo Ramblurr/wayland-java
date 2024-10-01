@@ -15,6 +15,7 @@
  * limitations under the License.
  *
  *
+ *
  */
 package org.freedesktop.wayland.client;
 
@@ -71,8 +72,7 @@ public abstract class Proxy<I> implements WaylandObject {
         this.pointer = pointer;
         this.implementation = implementation;
         this.version = version;
-        ObjectCache.store(this.pointer,
-                this);
+        ObjectCache.store(this.pointer, this);
         this.jObjectRef = GlobalRef.from(this);
 
         //Special casing implementation. For some proxies the underlying native library provides its own implementation.
