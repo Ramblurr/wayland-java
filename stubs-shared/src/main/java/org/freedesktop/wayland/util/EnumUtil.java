@@ -22,6 +22,7 @@ package org.freedesktop.wayland.util;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -65,5 +66,34 @@ public class EnumUtil {
         }
         Objects.requireNonNull(integerEnumMap);
         return (E) integerEnumMap.get(i);
+    }
+
+
+    /**
+     * Decodes an integer bitmask into an EnumSet of the specified enum type.
+     * <p>
+     * The function assumes that the enum constants are properly defined in the natural order
+     * of their bit positions. It iterates over the bits of the mask and adds the corresponding
+     * enum values to the resulting EnumSet.
+     * </p>
+     *
+     * @param <E>       the enum type
+     * @param enumClass the Class object representing the enum type
+     * @param mask      the integer bitmask to decode
+     * @return an EnumSet containing the enum values corresponding to the set bits in the mask
+     * @throws NullPointerException     if enumClass is null
+     * @throws IllegalArgumentException if mask is negative or if the ordinal value of any enum
+     *                                  constant exceeds the number of bits in an int
+     */
+    public static <E extends Enum<E>> EnumSet<E> decode(Class<E> enumClass, int mask) {
+        E[] values = enumClass.getEnumConstants();
+        EnumSet<E> result = EnumSet.noneOf(enumClass);
+        int code = mask;
+        while (code != 0) {
+            int ordinal = Integer.numberOfTrailingZeros(code);
+            code ^= Integer.lowestOneBit(code);
+            result.add(values[ordinal]);
+        }
+        return result;
     }
 }

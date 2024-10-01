@@ -42,7 +42,6 @@ public class Window implements WlSurfaceEventsV3,
     private static final int BTN_LEFT = 0x110;
     private static final int BTN_RIGHT = 0x111;
 
-    //    private final WlShellSurfaceProxy shellSurfaceProxy;
     private final XdgSurfaceProxy xdgSurfaceProxy;
 
     private final WlSurfaceProxy surfaceProxy;
@@ -193,10 +192,16 @@ public class Window implements WlSurfaceEventsV3,
 
     @Override
     public void configure(XdgSurfaceProxy emitter, int serial) {
-        this.redraw(0);
+        emitter.ackConfigure(serial);
+        if(this.waitForConfigure) {
+            this.redraw(0);
+            this.waitForConfigure = false;
+        }
     }
 
-
+    public boolean isWaitForConfigure() {
+        return waitForConfigure;
+    }
 //    @Override
 //    public void ping(final WlShellSurfaceProxy emitter,
 //                     final int serial) {

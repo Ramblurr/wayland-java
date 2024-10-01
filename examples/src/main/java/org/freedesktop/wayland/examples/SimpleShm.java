@@ -23,15 +23,15 @@
  */
 package org.freedesktop.wayland.examples;
 
-import org.freedesktop.wayland.shared.XdgToplevelWmCapabilities;
-
 import java.io.IOException;
 
 public class SimpleShm {
     public static void main(String args[]) throws IOException {
         Display display = new Display();
         Window window = new Window(display, 250, 250);
-        window.redraw(0);
+
+        if (!window.isWaitForConfigure())
+            window.redraw(0);
 
         try {
             while (true) {
