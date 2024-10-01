@@ -167,7 +167,7 @@ public final class Dispatcher {
                 final MemorySegment waylandObjectPointer = arguments.getO(index);
 
                 final WaylandObject waylandObject;
-                if (waylandObjectPointer == MemorySegment.NULL) {
+                if (MemorySegment.NULL.equals(waylandObjectPointer)) {
                     waylandObject = null;
                 } else {
                     final WaylandObject cachedObject = ObjectCache.from(waylandObjectPointer);

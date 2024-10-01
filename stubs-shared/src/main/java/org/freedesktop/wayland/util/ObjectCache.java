@@ -18,6 +18,8 @@
  */
 package org.freedesktop.wayland.util;
 
+import org.slf4j.LoggerFactory;
+
 import java.lang.foreign.MemorySegment;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +31,7 @@ import java.util.Map;
  */
 @SuppressWarnings("unchecked")
 public class ObjectCache {
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(ObjectCache.class);
     private static final Map<MemorySegment, Object> MAPPED_OBJECTS = new HashMap<>();
 
     /**
@@ -52,12 +55,13 @@ public class ObjectCache {
      */
     public static void store(final MemorySegment pointer,
                              final Object object) {
-        final Object oldValue = MAPPED_OBJECTS.put(pointer,
-                object);
+        if (MemorySegment.NULL.equals(pointer)) {
+            LOG.warn("Adding NULL MemorySegment to ObjectCache s={}", pointer);
+        }
+        final Object oldValue = MAPPED_OBJECTS.put(pointer, object);
         if (oldValue != null) {
             //put it back!
-            MAPPED_OBJECTS.put(pointer,
-                    oldValue);
+            MAPPED_OBJECTS.put(pointer, oldValue);
             throw new IllegalStateException(String.format("Can not re-map existing pointer. MemorySegment=%s, old value=%s, new value=%s",
                     pointer,
                     oldValue,

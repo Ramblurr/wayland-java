@@ -63,7 +63,7 @@ public class ShmBuffer {
         final MemorySegment wlShmBuffer = C.wl_shm_buffer_get(resource.wlResourcePtr);
 
         final ShmBuffer buffer;
-        if (wlShmBuffer == MemorySegment.NULL) {
+        if (MemorySegment.NULL.equals(wlShmBuffer)) {
             buffer = null;
         } else {
             buffer = new ShmBuffer(wlShmBuffer);

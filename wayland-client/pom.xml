@@ -80,9 +80,9 @@
         </dependency>
         <dependency>
             <!-- TODO remove this dep -->
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>findbugs</artifactId>
-            <version>3.0.1</version>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs</artifactId>
+            <version>4.8.6</version>
         </dependency>
     </dependencies>
 
@@ -112,7 +112,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5</version>
+                <version>3.13.0</version>
                 <configuration>
                     <source>22</source>
                     <target>22</target>

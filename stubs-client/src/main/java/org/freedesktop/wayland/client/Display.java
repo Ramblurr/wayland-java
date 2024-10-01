@@ -87,21 +87,21 @@ public abstract class Display extends Proxy<Void> {
 
     protected static MemorySegment _connect(String name) {
         var ptr = C.wl_display_connect(Memory.ARENA_AUTO.allocateFrom(name));
-        if (ptr == MemorySegment.NULL)
+        if (MemorySegment.NULL.equals(ptr))
             throw new RuntimeException("Unable to connect to display with name " + name);
         return ptr;
     }
 
     protected static MemorySegment _connect(int fd) {
         var ptr = C.wl_display_connect_to_fd(fd);
-        if (ptr == MemorySegment.NULL)
+        if (MemorySegment.NULL.equals(ptr))
             throw new RuntimeException("Unable to connect to display with file descriptor " + fd);
         return ptr;
     }
 
     public static MemorySegment _connect() {
         var ptr = C.wl_display_connect(MemorySegment.NULL);
-        if (ptr == MemorySegment.NULL)
+        if (MemorySegment.NULL.equals(ptr))
             throw new RuntimeException("Unable to auto connect to a display");
         return ptr;
     }

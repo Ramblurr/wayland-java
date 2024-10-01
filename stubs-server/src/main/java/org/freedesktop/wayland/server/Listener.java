@@ -31,8 +31,6 @@ import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
-//import static org.freedesktop.jaccall.Pointer.ref;
-
 /**
  * A single listener for Wayland signals
  * <p/>

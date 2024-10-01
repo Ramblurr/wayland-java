@@ -67,7 +67,7 @@ public class Display {
     }
 
     public static Display get(final MemorySegment pointer) {
-        if (pointer == MemorySegment.NULL) {
+        if (MemorySegment.NULL.equals(pointer)) {
             return null;
         }
         Display display = ObjectCache.from(pointer);
@@ -97,9 +97,9 @@ public class Display {
 
     public String addSocketAuto() {
         var namePtr = C.wl_display_add_socket_auto(this.pointer);
-        if (namePtr != MemorySegment.NULL)
-            return namePtr.getString(0);
-        throw new RuntimeException("wl_display_add_socket_auto failed");
+        if (MemorySegment.NULL.equals(namePtr))
+            throw new RuntimeException("wl_display_add_socket_auto failed");
+        return namePtr.getString(0);
     }
 
     public void terminate() {
@@ -157,7 +157,7 @@ public class Display {
      */
     public int addShmFormat(final int format) {
         var ret = C.wl_display_add_shm_format(this.pointer, format);
-        if (ret == MemorySegment.NULL)
+        if (MemorySegment.NULL.equals(ret))
             return 0;
         return ret.get(C.C_INT, 0);
     }

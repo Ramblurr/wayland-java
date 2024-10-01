@@ -41,6 +41,7 @@ public class InterfaceMeta {
         ObjectCache.store(this.wlInterfacePointer, this);
     }
 
+
     public MemorySegment getNativeWlInterface() {
         return this.wlInterfacePointer;
     }

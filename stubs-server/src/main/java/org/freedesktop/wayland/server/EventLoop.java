@@ -138,7 +138,7 @@ public class EventLoop {
     }
 
     public static EventLoop get(final MemorySegment eventLoopPointer) {
-        if (eventLoopPointer == MemorySegment.NULL) {
+        if (MemorySegment.NULL.equals(eventLoopPointer)) {
             return null;
         }
         EventLoop eventLoop = ObjectCache.from(eventLoopPointer);
