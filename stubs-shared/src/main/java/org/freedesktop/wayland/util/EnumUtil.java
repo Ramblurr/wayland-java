@@ -1,5 +1,4 @@
 /*
- * Copyright © 2015 Erik De Rijcke
  * Copyright © 2024 Casey Link
  *
  * Licensed under the Apache License,Version2.0(the"License");
@@ -53,6 +52,16 @@ public class EnumUtil {
         return map;
     }
 
+    /**
+     * Given an enum type from the generated code and an integer value returns the corresponding
+     * enum value for the integer.
+     *
+     * @param type the enum type from the wayland-scanner generated code
+     * @param i    the integer value
+     * @param <E>
+     * @return the enum value
+     * @throws NullPointerException if enumClass is null or is not from the wayland-scanner generated code
+     */
     public static <E extends Enum<E>> E of(Class<E> type, Integer i) {
         Map<Integer, Enum<?>> integerEnumMap = MAP.get(type);
         if (integerEnumMap == null) {
@@ -95,5 +104,54 @@ public class EnumUtil {
             result.add(values[ordinal]);
         }
         return result;
+    }
+
+    /**
+     * Encodes an EnumSet into an integer bitmask.
+     * <p>
+     * The function assumes that the enum constants are defined in the order of powers of 2.
+     * It uses the ordinal values of the enum constants to set the appropriate bits in the bitmask.
+     *
+     * @param <E> the enum type
+     * @param set the EnumSet to be encoded
+     * @return an integer bitmask representing the encoded EnumSet
+     */
+    public static <E extends Enum<E>> int encode(EnumSet<E> set) {
+        int ret = 0;
+        for (E val : set) {
+            ret |= 1 << val.ordinal();
+        }
+        return ret;
+    }
+
+    /**
+     * Encodes an EnumSet into an integer bitmask using reflection.
+     * <p>
+     * Unlike {@link EnumUtil#encode(EnumSet)}, this method does not rely on the ordinal values
+     * of the enum constants. Instead, it uses reflection to invoke a {@code getValue()} method
+     * on each enum constant to obtain the corresponding bit value. The resulting bitmask is
+     * constructed by performing a bitwise OR operation on the obtained bit values.
+     * <p>
+     * The enum type must have a {@code getValue()} method that returns the desired bit value
+     * for each constant.
+     *
+     * @param <E> the enum type
+     * @param set the EnumSet to be encoded
+     * @return an integer bitmask representing the encoded EnumSet
+     * @throws IllegalArgumentException if the enum type does not have a {@code getValue()} method
+     *                                  or if there is an exception during reflection
+     */
+    public static <E extends Enum<E>> int encodeWithReflection(EnumSet<E> set) {
+        int ret = 0;
+        for (E val : set) {
+            try {
+                Method getValueMethod = val.getClass().getMethod("getValue");
+                int bitValue = (int) getValueMethod.invoke(val);
+                ret |= bitValue;
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                throw new IllegalArgumentException("Enum type must have a getValue() method", e);
+            }
+        }
+        return ret;
     }
 }
