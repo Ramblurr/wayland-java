@@ -150,8 +150,12 @@ public class Arguments {
      * @param array
      * @return
      */
-    public Arguments set(final int index,
-                         final ByteBuffer array) {
+
+    public Arguments set(final int index, final WlArray array) {
+        return set(index, array.asByteBuffer());
+    }
+
+    public Arguments set(final int index, final ByteBuffer array) {
         MemorySegment wl_array_current = wl_array.allocate(Memory.ARENA_AUTO);
         var dataPtr = MemorySegment.ofBuffer(array);
         wl_array.alloc(wl_array_current, dataPtr.byteSize());
@@ -161,6 +165,7 @@ public class Arguments {
         this.argumentRefs.add(wl_array_current);
         return this;
     }
+
 
     @Override
     public int hashCode() {

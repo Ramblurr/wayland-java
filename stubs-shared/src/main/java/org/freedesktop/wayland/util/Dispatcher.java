@@ -51,10 +51,11 @@ public final class Dispatcher {
             message = ObjectCache.<MessageMeta>from(wlMessage)
                     .getMessage();
             waylandObject = ObjectCache.from(wlObject);
-            method = get(waylandObject.getClass(),
-                    waylandObject.getImplementation()
-                            .getClass(),
-                    message);
+            method = get(
+                    waylandObject.getClass(),
+                    waylandObject.getImplementation().getClass(),
+                    message
+            );
 
             final String signature = message.signature();
             //TODO do something with the version signature? Somehow see which version the implementation exposes and
@@ -95,15 +96,14 @@ public final class Dispatcher {
                     optional = false;
                 }
             }
-            method.invoke(waylandObject.getImplementation(),
-                    jargs);
+            method.invoke(waylandObject.getImplementation(), jargs);
         } catch (final Exception e) {
             System.err.printf("""
                             Got an exception in the wayland dispatcher, This is most likely a bug.
-                            Method=%s
-                            implementation=%s
-                            arguments=%s
-                            message=%s%n""",
+                              method=%s
+                              implementation=%s
+                              arguments=%s
+                              message=%s%n""",
                     method,
                     waylandObject == null ? "waylandObjectNull" : waylandObject.getImplementation(),
                     Arrays.toString(jargs),
@@ -132,17 +132,11 @@ public final class Dispatcher {
             final Class<?>[] types = message.types();
             final Class<?>[] argTypes = new Class<?>[types.length + 1];
             //copy to new array and shift by 1
-            System.arraycopy(types,
-                    0,
-                    argTypes,
-                    1,
-                    types.length);
+            System.arraycopy(types, 0, argTypes, 1, types.length);
             argTypes[0] = waylandObjectType;
-            method = implementationType.getMethod(message.functionName(),
-                    argTypes);
+            method = implementationType.getMethod(message.functionName(), argTypes);
             method.setAccessible(true);
-            methodMap.put(methodHash,
-                    method);
+            methodMap.put(methodHash, method);
         }
         return method;
     }
@@ -188,8 +182,7 @@ public final class Dispatcher {
                 return arguments.getS(index);
             }
             case 'a': {
-                // TODO returning a MemorySegment is probably not right..
-                return arguments.getA(index);
+                return new WlArray(arguments.getA(index));
             }
             default: {
                 throw new IllegalArgumentException("Can not convert wl_argument type: " + type);
