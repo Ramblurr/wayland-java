@@ -98,15 +98,16 @@ public final class Dispatcher {
             method.invoke(waylandObject.getImplementation(),
                     jargs);
         } catch (final Exception e) {
-            System.err.println(String.format("Got an exception, This is most likely a bug.\n"
-                            + "Method=%s\n" +
-                            "implementation=%s\n" +
-                            "arguments=%s\n" +
-                            "message=%s",
+            System.err.printf("""
+                            Got an exception in the wayland dispatcher, This is most likely a bug.
+                            Method=%s
+                            implementation=%s
+                            arguments=%s
+                            message=%s%n""",
                     method,
-                    waylandObject.getImplementation(),
+                    waylandObject == null ? "waylandObjectNull" : waylandObject.getImplementation(),
                     Arrays.toString(jargs),
-                    message));
+                    message);
             e.printStackTrace();
         }
 
