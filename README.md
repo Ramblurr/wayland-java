@@ -1,8 +1,9 @@
 # wayland-java
 
-[![License](https://img.shields.io/:license-Apache2-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
-[![ImageBuild](https://github.com/Ramblurr/wayland-java/actions/workflows/ImageBuild.yaml/badge.svg)](https://github.com/Ramblurr/wayland-java/actions)
+[![license](https://img.shields.io/:license-Apache2-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
+[![CI](https://github.com/Ramblurr/wayland-java/actions/workflows/ci.yml/badge.svg)](https://github.com/Ramblurr/wayland-java/actions)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.freedesktop.wayland/wayland-protocols/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.freedesktop.wayland)
+[![Javadoc](https://img.shields.io/badge/javadoc-online-green)](https://ramblurr.github.io/wayland-java/javadoc)
 
 > Modern (JDK 22+) Java/JVM bindings for libwayland and wayland-protocols.
 
