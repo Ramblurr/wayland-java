@@ -1,15 +1,13 @@
 {
   description = "wayland-java dev setup";
-
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-
   outputs =
     { self, nixpkgs }:
     let
-      javaVersion = 22;
+      javaVersion = toString 22;
       overlays = [
         (final: prev: rec {
-          jdk = prev."jdk${toString javaVersion}";
+          jdk = prev."jdk${javaVersion}";
           jextract = prev.jextract.overrideAttrs (old: {
             version = "unstable-2024-09-27";
             src = prev.fetchFromGitHub {
@@ -19,8 +17,9 @@
               hash = "sha256-7BZBygVX0lPqT+xES8eQw/WC3R1Q9L+p7PnQU1tfIyw=";
             };
             gradleFlags = [
+              # as of time of writing jextract requires llvm 13!
               "-Pllvm_home=${prev.llvmPackages_13.libclang.lib}"
-              "-Pjdk22_home=${jdk}"
+              "-Pjdk${javaVersion}_home=${jdk}"
             ];
           });
         })
@@ -41,33 +40,27 @@
     {
       devShells = forEachSupportedSystem (
         { pkgs }:
+        let
+          packages = [
+            pkgs."jdk${javaVersion}"
+            pkgs.jextract
+            pkgs.gradle
+            pkgs.wayland-scanner
+            pkgs.python312Packages.pywayland
+          ];
+          libraries = [
+            pkgs.wayland
+            pkgs.wayland-scanner
+            pkgs.wayland-protocols
+          ];
+        in
         {
           default = pkgs.mkShell {
-            packages = [
-              pkgs.jdk22
-              pkgs.jextract
-              pkgs.gradle
-              pkgs.wayland-scanner
-              pkgs.python312Packages.pywayland
-            ];
-
-            buildInputs = [
-              pkgs.wayland
-              pkgs.wayland-scanner
-              pkgs.wayland-protocols
-            ];
+            packages = packages;
+            buildInputs = libraries;
             nativeBuildInputs = [ pkgs.pkg-config ];
-            inputsFrom = [
-              pkgs.wayland
-              pkgs.wayland-scanner
-              pkgs.wayland-protocols
-            ];
-            env.LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
-              pkgs.wayland
-              pkgs.wayland-scanner
-              pkgs.wayland-protocols
-            ];
-
+            inputsFrom = libraries;
+            env.LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath libraries;
           };
         }
       );
