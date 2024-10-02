@@ -57,10 +57,11 @@ if ("release" !in gradle.startParameter.taskNames) {
 
 plugins {
     idea
+    `maven-publish`
     java
     `java-library`
-    `maven-publish`
 }
+
 allprojects {
     group = "org.freedesktop.wayland"
     repositories {
@@ -70,14 +71,32 @@ allprojects {
 }
 
 subprojects {
-    apply(plugin = "java")
-    apply(plugin = "java-library")
-    java {
-        toolchain {
-            languageVersion.set(JavaLanguageVersion.of(22))
+    val javaProjects = arrayOf(
+        "wayland-native",
+        "stubs-shared",
+        "wayland-scanner",
+        "stubs-client",
+        "stubs-server",
+        "wayland-protocols",
+        "examples"
+    )
+    val mavenProjects = arrayOf(
+        "wayland-native",
+        "stubs-shared",
+        "wayland-scanner",
+        "stubs-client",
+        "stubs-server",
+        "wayland-protocols",
+    )
+    if (project.name in javaProjects) {
+        apply(plugin = "java")
+        apply(plugin = "java-library")
+        java {
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(22))
+            }
         }
     }
-    val mavenProjects = arrayOf("wayland-client", "wayland-server", "wayland-scanner", "stubs-shared", "wayland-native", "stubs-client", "stubs-server")
     if (project.name in mavenProjects) {
         apply(plugin = "maven-publish")
 //        apply(plugin = "signing")

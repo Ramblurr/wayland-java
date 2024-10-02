@@ -1,5 +1,5 @@
 dependencies {
-    api(project(":wayland-client"))
+    api(project(":wayland-protocols"))
     api(libs.com.github.spotbugs.spotbugs.annotations)
     testImplementation(libs.org.junit.jupiter.junit.jupiter)
     testImplementation(libs.org.junit.platform.junit.platform.launcher)
@@ -7,10 +7,3 @@ dependencies {
 }
 
 description = "wayland-examples"
-
-java {
-    //withJavadocJar()
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(22))
-    }
-}

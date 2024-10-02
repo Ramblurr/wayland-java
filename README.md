@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/:license-Apache2-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 [![ImageBuild](https://github.com/Ramblurr/wayland-java/actions/workflows/ImageBuild.yaml/badge.svg)](https://github.com/Ramblurr/wayland-java/actions)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.freedesktop.wayland/wayland-examples/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.freedesktop.wayland)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.freedesktop.wayland/wayland-protocols/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.freedesktop.wayland)
 
 > Modern (JDK 22+) Java/JVM bindings for libwayland and wayland-protocols.
 
@@ -31,33 +31,34 @@ In addition to adding the maven dependencies to your project you'll need to have
 
 #### Adding the dependency
 
-This repo publishes several artifacts that you can add as dependencies to your favorite build tool.
+This repo publishes several artifacts that you can add as dependencies to your favorite build tool depending on your needs.
 
-You only need to choose one (usually either `wayland-server` or `wayland-client`).
+If you need the [core wayland protocol][wayland-core] and [stable wayland-protocols][wayland-protocols-stable]) then you want the `wayland-protocols` artifact. 
 
-Choose your artifact depending on which type of wayland application you are building:
+* `wayland-protocols`: [![org.freedesktop.wayland:wayland-protocols:XXX](https://maven-badges.herokuapp.com/maven-central/org.freedesktop.wayland/wayland-protocols/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.freedesktop.wayland/wayland-protocols)
 
-* wayland server: [![org.freedesktop.wayland:wayland-server:XXX](https://maven-badges.herokuapp.com/maven-central/org.freedesktop.wayland/wayland-server/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.freedesktop.wayland/wayland-server)
-* wayland client: [![org.freedesktop.wayland:wayland-client:XXX](https://maven-badges.herokuapp.com/maven-central/org.freedesktop.wayland/wayland-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.freedesktop.wayland/wayland-client)
+If you need a different set of wayland protocols, then see the next section.
 
 ### Wayland Protocols
 
-The `wayland-client` and `wayland-server` contain protocol bindings for these wayland protocols:
+This library provides [client stubs][artifact-client], [server stubs][artifact-server], and [shared stubs][artifact-shared] artifacts that do the heavy lifting.
 
-* the core protocols
-* `stable/xdg-shell`
+Additionally we provide the [wayland-scanner][artifact-scanner] that generates bindings from wayland protocol XML descriptions.
 
-If you want to use other protocols, then you will want to take advantage of the wayland-scanner from this library that will generate java at build time for the protocols.
+The [wayland-protocols][artifact-protocols] artifact, as described above, contains a pre-chosen subset of all the available protocols. If that artifact doesn't meet your needs, then you should generate your own.
 
-* wayland-scanner: [![org.freedesktop.wayland:wayland-scanner:XXX](https://maven-badges.herokuapp.com/maven-central/org.freedesktop.wayland/wayland-scanner/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.freedesktop.wayland/wayland-scanner)
+#### Generate your own protocol bindings
 
-Add it to your build path, no need to put it on your classpath as it will only be used during compilation.
+1. Add the [![org.freedesktop.wayland:wayland-scanner:XXX](https://maven-badges.herokuapp.com/maven-central/org.freedesktop.wayland/wayland-scanner/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.freedesktop.wayland/wayland-scanner) artifact to your build path, no need to put it on your classpath as it will only be used during compilation.
 
-Add a `@Protocols` annotation to your own private `package-info.java` file and set it to use your custom protocol xml file. Here's an [example](wayland-client/src/main/java/org/freedesktop/wayland/package-info.java).
+2. Add either the [client stubs][artifact-client] or [server stubs][artifact-server] to your classpath.
+    * [![org.freedesktop.wayland:wayland-stubs-client:XXX](https://maven-badges.herokuapp.com/maven-central/org.freedesktop.wayland/wayland-stubs-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.freedesktop.wayland/wayland-stubs-client)
+    * [![org.freedesktop.wayland:wayland-stubs-server:XXX](https://maven-badges.herokuapp.com/maven-central/org.freedesktop.wayland/wayland-stubs-server/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.freedesktop.wayland/wayland-stubs-server)
+3. Add the appropriate `@Wayland*Protocols` annotation to your own private `package-info.java` file and configure the parameters.
+4. Ensure your build tool is configured to run annotation processors.
+5. Build your project.
 
-Ensure your build tool is configured to run annotation processors.
-
-Build your project. The generated bindings should automatically appear in the same package as your `package-info.java` file.
+The generated bindings should automatically appear in the buidl dir under the same package as your `package-info.java` file.
 
 ## Develop/Contribute
 
@@ -110,3 +111,6 @@ Or you can open the project in intellij, just choose the gradle model.
 [jep454]: https://openjdk.org/jeps/454
 [erik]: https://github.com/udevbe
 [erikwayland]: https://github.com/udevbe/wayland-java-bindings
+[wayland-core]: https://wayland.app/protocols/wayland
+[wayland-protocols]: https://gitlab.freedesktop.org/wayland/wayland-protocols
+[wayland-protocols-stable]: https://gitlab.freedesktop.org/wayland/wayland-protocols/-/tree/main/stable?ref_type=heads

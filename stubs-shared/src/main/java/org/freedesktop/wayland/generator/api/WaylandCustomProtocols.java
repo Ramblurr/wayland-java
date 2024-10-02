@@ -20,20 +20,6 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.PACKAGE)
 @Retention(RetentionPolicy.SOURCE)
-public @interface Protocol {
-    String path();
-
-    String pkgConfig() default "";
-
-    boolean dtd() default false;
-
-    String sharedPackage() default "shared";
-
-    String clientPackage() default "client";
-
-    String serverPackage() default "server";
-
-    boolean generateClient() default true;
-
-    boolean generateServer() default true;
+public @interface WaylandCustomProtocols {
+    WaylandCustomProtocol[] value();
 }

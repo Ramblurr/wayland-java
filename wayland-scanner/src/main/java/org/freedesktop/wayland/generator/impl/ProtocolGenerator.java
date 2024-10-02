@@ -18,7 +18,7 @@
  */
 package org.freedesktop.wayland.generator.impl;
 
-import org.freedesktop.wayland.generator.api.Protocol;
+import org.freedesktop.wayland.generator.api.WaylandCustomProtocol;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.traversal.DocumentTraversal;
@@ -35,17 +35,24 @@ import javax.tools.Diagnostic;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.*;
-import java.nio.file.Path;
+import java.io.File;
+import java.io.IOException;
+import java.util.Objects;
 
 public class ProtocolGenerator {
     public void scan(final Messager messager,
                      final PackageElement packageElement,
                      final Filer filer,
-                     final Protocol protocol) throws IOException, SAXException, ParserConfigurationException {
+                     final ProtocolGenConfig config
+    )
+            throws IOException, SAXException, ParserConfigurationException {
+
+        Objects.requireNonNull(messager);
+        Objects.requireNonNull(messager);
+        Objects.requireNonNull(config);
 
         final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        if (protocol.dtd()) {
+        if (config.validateDtd()) {
             factory.setValidating(true);
         }
         final DocumentBuilder xmlBuilder = factory.newDocumentBuilder();
@@ -68,8 +75,7 @@ public class ProtocolGenerator {
                         throw e;
                     }
                 });
-        File protocolFile = resolveProtocolPath(protocol);
-        final Document doc = xmlBuilder.parse(protocolFile);
+        final Document doc = xmlBuilder.parse(config.protocolFile());
         doc.getDocumentElement()
                 .normalize();
 
@@ -81,60 +87,9 @@ public class ProtocolGenerator {
         final Element protocolElement = (Element) treeWalker.getRoot();
         new ProtocolWriter().write(packageElement,
                 filer,
-                protocol,
+                config,
                 protocolElement);
     }
 
-    private File resolveProtocolPath(Protocol protocol) {
-        System.out.println(String.format("resolving protocol annotation %s", protocol));
-        var path = new File(protocol.path());
-        if (path.exists() && path.canRead()) {
-            return path;
-        }
-
-        if (protocol.pkgConfig() != "") {
-            path = resolveFromPkgConfig(protocol);
-            if (path != null && path.exists() && path.canRead()) {
-                return path;
-            }
-        }
-
-        throw new RuntimeException(String.format("Cannot locate protocol xml for path=%s pkgConfig=%s, pkgConfigDataDirOutput=", protocol.path(), protocol.pkgConfig(),
-                pkgConfigDataDir(protocol.pkgConfig())
-        ));
-    }
-
-    private static File resolveFromPkgConfig(Protocol protocol) {
-        String pkgConfigDataDir = pkgConfigDataDir(protocol.pkgConfig());
-        System.out.println(String.format("pkgConfigDataDir=%s", pkgConfigDataDir));
-        if (pkgConfigDataDir == null)
-            return null;
-        var ret = Path.of(pkgConfigDataDir, protocol.path()).toFile();
-        System.out.println(
-                String.format("pkgconfig reg=%s", ret));
-        return ret;
-    }
-
-    private static String pkgConfigDataDir(String packageName) {
-        var process = new ProcessBuilder(
-                "pkg-config",
-                "--variable=pkgdatadir",
-                packageName
-        );
-        process.redirectErrorStream(true);
-        try {
-            Process start = process.start();
-            InputStream is = start.getInputStream();
-            start.waitFor();
-            BufferedReader br = new BufferedReader(new InputStreamReader(is));
-            String line;
-            while ((line = br.readLine()) != null) {
-                return line;
-            }
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
 }
 

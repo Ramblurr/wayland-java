@@ -13,7 +13,7 @@
 //limitations under the License.
 package org.freedesktop.wayland.generator.impl;
 
-import org.freedesktop.wayland.generator.api.Protocol;
+import org.freedesktop.wayland.generator.api.WaylandCustomProtocol;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
@@ -29,7 +29,7 @@ public class ProtocolWriter {
 
     public void write(final PackageElement packageElement,
                       final Filer filer,
-                      final Protocol protocol,
+                      final ProtocolGenConfig config,
                       final Element protocolElement) throws IOException {
         //TODO do something with name?
         final String name = protocolElement.getAttribute(ELEMENT_PROTOCOL_ATTRIBUTE_NAME);
@@ -46,7 +46,7 @@ public class ProtocolWriter {
             final Element interfaceElement = (Element) interfaceElements.item(i);
             new InterfaceWriter().write(packageElement,
                     filer,
-                    protocol,
+                    config,
                     copyright,
                     interfaceElement);
         }

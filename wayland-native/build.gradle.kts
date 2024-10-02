@@ -9,9 +9,7 @@ tasks.named<Javadoc>("javadoc") {
 }
 
 tasks.compileJava {
-    dependsOn(
-        "jextract"
-    )
+    dependsOn("jextract")
 }
 
 fun isFoundInPath(file: String): Boolean {
@@ -54,7 +52,6 @@ fun systemIncludes(): List<String> {
         exec {
             commandLine("pkg-config", "--variable=pkgdatadir", name)
             commandLine("gcc", "-E", "-Wp,-v", "-xc", "/dev/null")
-            //standardOutput = this@apply
             standardOutput = ByteArrayOutputStream()
             errorOutput = this@apply
         }
@@ -68,9 +65,6 @@ fun systemIncludes(): List<String> {
 }
 
 val jextractOutput = "build/generated/sources/jextract/java/main"
-
-
-
 fun jextractArgsLibC(): List<String> {
     val includes = systemIncludes().flatMap { listOf("--include-dir", it) }
     val args = arrayOf(
@@ -95,6 +89,7 @@ fun jextractArgsLibC(): List<String> {
     )
     return includes + args + headers
 }
+
 fun jextractArgsWayland(): List<String> {
     val includes = systemIncludes().flatMap { listOf("--include-dir", it) }
     val libraries = listOf(
@@ -126,8 +121,8 @@ fun fmtCommandLineArgs(args: List<String>): String {
     })
 }
 
-fun jextract(cwd: File, args: List<String>, logPath: File): ExecResult  {
-    val res =  exec {
+fun jextract(cwd: File, args: List<String>, logPath: File): ExecResult {
+    val res = exec {
         workingDir = cwd
         commandLine(listOf("jextract") + args)
         standardOutput = FileOutputStream(logPath)

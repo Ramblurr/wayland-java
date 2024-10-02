@@ -14,7 +14,7 @@
 package org.freedesktop.wayland.generator.impl;
 
 
-import org.freedesktop.wayland.generator.api.Protocol;
+import org.freedesktop.wayland.generator.api.WaylandCustomProtocol;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
@@ -35,27 +35,27 @@ public class InterfaceWriter {
 
     public void write(final PackageElement packageElement,
                       final Filer filer,
-                      final Protocol protocol,
+                      final ProtocolGenConfig config,
                       final String copyright,
                       final Element interfaceElement) throws IOException {
         final String packageRoot = packageElement.getQualifiedName()
                 .toString();
         writeShared(packageElement,
                 filer,
-                packageRoot + "." + protocol.sharedPackage(),
+                packageRoot + "." + config.sharedPackage(),
                 copyright,
                 interfaceElement);
-        if (protocol.generateServer()) {
+        if (config.generateServer()) {
             writeServer(packageElement,
                     filer,
-                    packageRoot + "." + protocol.serverPackage(),
+                    packageRoot + "." + config.serverPackage(),
                     copyright,
                     interfaceElement);
         }
-        if (protocol.generateClient()) {
+        if (config.generateClient()) {
             writeClient(packageElement,
                     filer,
-                    packageRoot + "." + protocol.clientPackage(),
+                    packageRoot + "." + config.clientPackage(),
                     copyright,
                     interfaceElement);
         }
