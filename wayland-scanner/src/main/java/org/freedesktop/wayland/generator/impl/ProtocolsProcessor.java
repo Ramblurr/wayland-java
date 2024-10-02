@@ -89,7 +89,7 @@ public class ProtocolsProcessor extends AbstractProcessor {
     public boolean process(final Set<? extends TypeElement> nope, final RoundEnvironment roundEnv) {
         Set<ProtocolGenConfig> protocolGenConfigs = gatherProtocols(this.processingEnv, roundEnv);
         for (var config : protocolGenConfigs) {
-            this.processingEnv.getMessager().printWarning("processing " + config.protocolFile());
+            this.processingEnv.getMessager().printNote("processing wayland protocol file=" + config.protocolFile());
             try {
                 new ProtocolGenerator().scan(this.processingEnv.getMessager(),
                         config.packageElement(),
