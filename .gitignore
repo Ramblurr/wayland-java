@@ -1,13 +1,7 @@
-/generator/dependency-reduced-pom.xml
 .*.swp
 *.iml
-*.so
-local.properties
 build
-src/org/freedesktop/wayland/protocol
 test/classes
-.cproject
-
 /.gradle
 /.classpath
 /.settings

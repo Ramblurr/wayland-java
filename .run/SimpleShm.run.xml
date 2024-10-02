@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="SimpleShm" type="Application" factoryName="Application" nameIsGenerated="true">
     <option name="MAIN_CLASS_NAME" value="org.freedesktop.wayland.examples.SimpleShm" />
-    <module name="wayland-java-bindings.wayland-examples.main" />
+    <module name="wayland-java.wayland-examples.main" />
     <option name="VM_PARAMETERS" value="--enable-native-access=ALL-UNNAMED" />
     <method v="2">
       <option name="Make" enabled="true" />
