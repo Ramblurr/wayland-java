@@ -115,3 +115,8 @@ Or you can open the project in intellij, just choose the gradle model.
 [wayland-core]: https://wayland.app/protocols/wayland
 [wayland-protocols]: https://gitlab.freedesktop.org/wayland/wayland-protocols
 [wayland-protocols-stable]: https://gitlab.freedesktop.org/wayland/wayland-protocols/-/tree/main/stable?ref_type=heads
+[artifact-client]: https://mvnrepository.com/artifact/org.freedesktop.wayland/stubs-client
+[artifact-server]: https://mvnrepository.com/artifact/org.freedesktop.wayland/stubs-server
+[artifact-shared]: https://mvnrepository.com/artifact/org.freedesktop.wayland/stubs-shared
+[artifact-scanner]: https://mvnrepository.com/artifact/org.freedesktop.wayland/wayland-scanner
+[artifact-protocols]: https://mvnrepository.com/artifact/org.freedesktop.wayland/wayland-protocols
