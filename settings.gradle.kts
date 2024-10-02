@@ -1,12 +1,10 @@
 rootProject.name = "wayland-java-bindings"
 
-include(":wayland-examples")
-include(":wayland-scanner")
+include(":jextract")
 include(":stubs-shared")
-include(":wayland-client")
-include(":wayland-server")
+include(":wayland-scanner")
 include(":stubs-server")
 include(":stubs-client")
-include(":jextract")
-
-project(":wayland-examples").projectDir = file("examples")
+include(":wayland-client")
+include(":wayland-server")
+include(":examples")

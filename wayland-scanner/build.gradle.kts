@@ -9,10 +9,3 @@ dependencies {
 }
 
 description = "wayland-scanner"
-
-//java {
-//    withJavadocJar()
-//    toolchain {
-//        languageVersion.set(JavaLanguageVersion.of(22))
-//    }
-//}

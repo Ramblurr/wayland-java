@@ -9,10 +9,3 @@ dependencies {
 }
 
 description = "stubs-client"
-
-//java {
-//    withJavadocJar()
-//    toolchain {
-//        languageVersion.set(JavaLanguageVersion.of(22))
-//    }
-//}

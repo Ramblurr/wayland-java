@@ -7,10 +7,3 @@ dependencies {
 }
 
 description = "stubs-shared"
-
-//java {
-//    withJavadocJar()
-//    toolchain {
-//        languageVersion.set(JavaLanguageVersion.of(22))
-//    }
-//}

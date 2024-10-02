@@ -1,12 +1,8 @@
+import org.apache.tools.ant.taskdefs.condition.Os
 import java.io.ByteArrayOutputStream
-description = "jextract generated native wrappers for wayland-java"
+import java.io.FileOutputStream
 
-//java {
-//    withJavadocJar()
-//    toolchain {
-//        languageVersion.set(JavaLanguageVersion.of(22))
-//    }
-//}
+description = "jextract generated native wrappers for wayland-java"
 
 tasks.named<Javadoc>("javadoc") {
     source += fileTree("build/generated/sources/jextract/java/main")
@@ -18,6 +14,41 @@ tasks.compileJava {
     )
 }
 
+fun isFoundInPath(file: String): Boolean {
+    val pathEnv = System.getenv("PATH")
+    val fileFound = pathEnv?.split(File.pathSeparator)?.find { folder ->
+        if (File(folder, file).exists()) {
+            true
+        } else {
+            false
+        }
+    }
+    return fileFound != null
+}
+
+fun checkOS() {
+    if (!Os.isFamily(Os.FAMILY_UNIX)) {
+        logger.warn("! WARNING ! Building wayland-java is not supported on non-Linux machines.")
+        logger.warn("            I have no idea what will happen.")
+    }
+}
+
+fun assertCliToolsExist() {
+    val msg =
+        "The '%s' command could not be found in your PATH. Please refer to the wayland-java documentation for more information.";
+    val tools = listOf(
+        "jextract",
+        "pkg-config",
+        "gcc"
+    )
+    for (tool in tools) {
+        if (!isFoundInPath(tool)) {
+            throw GradleException(String.format(msg, tool))
+        }
+    }
+}
+
+// automatically detects the paths to the headers we need for non-wayland system deps
 fun systemIncludes(): List<String> {
     val raw = ByteArrayOutputStream().apply {
         exec {
@@ -37,7 +68,6 @@ fun systemIncludes(): List<String> {
 }
 
 val jextractOutput = "build/generated/sources/jextract/java/main"
-
 fun buildJextractArgs(): List<String> {
     val includes = systemIncludes().flatMap { listOf("--include-dir", it) }
     val libraries = listOf(
@@ -72,12 +102,41 @@ fun buildJextractArgs(): List<String> {
     return includes + args + libraries + headers
 }
 
-// TODO get this dynamically
-val jextractBinary = "/nix/store/3yydk26390abzmfcahwqz6h5lqrp6bld-jextract-unstable-2024-09-27/bin/jextract"
-
-task<Exec>("jextract") {
-    commandLine(listOf(jextractBinary) + buildJextractArgs())
+fun fmtCommandLineArgs(args: List<String>): String {
+    return args.joinToString(separator = " ", transform = {
+        if (it.startsWith("--"))
+            "$it"
+        else
+            "\"$it\""
+    })
 }
+
+// the meat of all this: run the jextract tool with the calculated arguments
+task<Exec>("jextract") {
+    val args = buildJextractArgs()
+    val logPath = "${layout.buildDirectory.get()}/jextract.log"
+    doFirst {
+        checkOS()
+        assertCliToolsExist()
+    }
+    commandLine(listOf("jextract") + args)
+    standardOutput = FileOutputStream(logPath)
+    errorOutput = standardOutput
+    isIgnoreExitValue = true
+    doLast {
+        if (executionResult.get().exitValue != 0) {
+            throw GradleException(
+                "jextract execution failed. build cannot continue. the jextract command ran was:\n\n" +
+                        "    jextract ${fmtCommandLineArgs(args)}\n\n" +
+                        "This command was run from the working directory $workingDir\n" +
+                        "Logs from jextract's output can be found at $logPath\n"
+            )
+        }
+
+    }
+}
+
+// ensure the jextract generated files are added to the classpath
 sourceSets["main"].java.srcDir(file(jextractOutput))
 sourceSets["main"].compileClasspath += files(file(jextractOutput))
 sourceSets["main"].runtimeClasspath += files(file(jextractOutput))
