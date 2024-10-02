@@ -16,3 +16,4 @@ test/classes
 /.idea
 .direnv
 target
+gradle.properties
