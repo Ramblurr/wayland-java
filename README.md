@@ -61,11 +61,10 @@ The [wayland-protocols][artifact-protocols] artifact, as described above, contai
 
 ### Which `@Wayland*Protocol` annotation?
 
-There are three annotations you can use to generate protocol bindings. 
+There are two annotations you can use to generate protocol bindings. 
 
-From low-level to high-level:
 
-1. [`org.freedesktop.wayland.generator.api.WaylandCustomProtocols`][annotation-custom]
+1. [`org.freedesktop.wayland.generator.api.WaylandCustomProtocols`][annotation-custom] - This is the most flexible one
 
      ``` java
      // in src/main/java/my/domain/wayland/package-info.java
@@ -82,8 +81,7 @@ From low-level to high-level:
      
      There are more options available, see the [javadoc][annotation-custom]
      
-2. [`org.freedesktop.wayland.generator.api.WaylandProtocols`][annotation-protocols] - Load a bunch of protocols at once from a directory where each protocol xml is in its own directory (like the [wayland-protocols repo][wayland-protocols]) see [wayland-protocols/src/main/java/org/freedesktop/wayland/package-info.java][example-pkg-info] and javadoc
-3. [`org.freedesktop.wayland.generator.api.WaylandCoreProtocols`][annotation-protocols-core]  - Load the core wayland protocols see [wayland-protocols/src/main/java/org/freedesktop/wayland/package-info.java][example-pkg-info] and javadoc
+2. [`org.freedesktop.wayland.generator.api.WaylandProtocols`][annotation-protocols] - A helper annotation that loads a bunch of protocols at once from a directory where each protocol xml is in its own directory (like the [wayland-protocols repo][wayland-protocols]) see [wayland-protocols/src/main/java/org/freedesktop/wayland/package-info.java][example-pkg-info] and javadoc
 
 #### Custom protocol
 

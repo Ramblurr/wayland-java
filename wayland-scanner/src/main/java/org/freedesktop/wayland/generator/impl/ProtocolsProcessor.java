@@ -13,7 +13,6 @@
 //limitations under the License.
 package org.freedesktop.wayland.generator.impl;
 
-import org.freedesktop.wayland.generator.api.WaylandCoreProtocols;
 import org.freedesktop.wayland.generator.api.WaylandCustomProtocol;
 import org.freedesktop.wayland.generator.api.WaylandCustomProtocols;
 import org.freedesktop.wayland.generator.api.WaylandProtocols;
@@ -40,20 +39,6 @@ public class ProtocolsProcessor extends AbstractProcessor {
     public static Set<ProtocolGenConfig> gatherProtocols(ProcessingEnvironment penv, final RoundEnvironment roundEnv) {
         Set<ProtocolGenConfig> ret = new LinkedHashSet<>();
 
-        // gather @WaylandCoreProtocols
-        for (final Element elem : roundEnv.getElementsAnnotatedWith(WaylandCoreProtocols.class)) {
-            final WaylandCoreProtocols protocol = elem.getAnnotation(WaylandCoreProtocols.class);
-            var path = ProtocolXmlPathResolver.resolvePath(protocol);
-            if (path.isEmpty()) {
-                penv.getMessager().printError("wayland-scanner could not resolve any protocol xml files", elem);
-                continue;
-            }
-            ret.add(new ProtocolGenConfig(
-                    protocol,
-                    elem, getPackage(elem),
-                    path.get()
-            ));
-        }
         // gather @WaylandProtocols
         for (final Element elem : roundEnv.getElementsAnnotatedWith(WaylandProtocols.class)) {
             final WaylandProtocols protocol = elem.getAnnotation(WaylandProtocols.class);

@@ -1,6 +1,5 @@
 package org.freedesktop.wayland.generator.impl;
 
-import org.freedesktop.wayland.generator.api.WaylandCoreProtocols;
 import org.freedesktop.wayland.generator.api.WaylandCustomProtocol;
 import org.freedesktop.wayland.generator.api.WaylandProtocols;
 
@@ -9,17 +8,6 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class ProtocolXmlPathResolver {
-
-    public static Optional<File> resolvePath(WaylandCoreProtocols protocol) {
-        var maybeDataDir = pkgConfigDataDir(protocol.pkgConfig());
-        if (maybeDataDir.isEmpty())
-            return Optional.empty();
-        var path = Path.of(maybeDataDir.get(), "wayland.xml").toFile();
-        if (path.exists() && path.canRead()) {
-            return Optional.of(path);
-        }
-        return Optional.empty();
-    }
 
     public static List<File> resolvePaths(WaylandProtocols protocol) {
         var maybeDataDir = pkgConfigDataDir(protocol.pkgConfig());

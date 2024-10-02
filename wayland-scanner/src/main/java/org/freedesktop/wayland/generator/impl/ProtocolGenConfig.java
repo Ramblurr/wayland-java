@@ -1,6 +1,5 @@
 package org.freedesktop.wayland.generator.impl;
 
-import org.freedesktop.wayland.generator.api.WaylandCoreProtocols;
 import org.freedesktop.wayland.generator.api.WaylandCustomProtocol;
 import org.freedesktop.wayland.generator.api.WaylandProtocols;
 
@@ -19,14 +18,6 @@ public record ProtocolGenConfig(String sharedPackage, String clientPackage, Stri
                              File protocolFile) {
         this(protocol.sharedPackage(), protocol.clientPackage(), protocol.serverPackage(), protocol.generateClient(), protocol.generateServer(), protocol.dtd(),
                 element, packageElement, protocolFile, protocol);
-    }
-
-    public ProtocolGenConfig(WaylandCoreProtocols protocol,
-                             Element element, PackageElement packageElement,
-                             File protocolFile) {
-        this(protocol.sharedPackage(), protocol.clientPackage(), protocol.serverPackage(), protocol.generateClient(), protocol.generateServer(), false,
-                element, packageElement,
-                protocolFile, null);
     }
 
     public ProtocolGenConfig(WaylandProtocols protocol,

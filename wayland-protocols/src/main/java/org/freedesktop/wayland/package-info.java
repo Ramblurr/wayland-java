@@ -16,27 +16,10 @@
  *
  *
  */
-/*
-An example for custom protocols:
-@WaylandCustomProtocols({
-        @WaylandCustomProtocol(path = "wayland.xml",
-                pkgConfig = "wayland-scanner"),
-        @WaylandCustomProtocol(path = "stable/xdg-shell/xdg-shell.xml",
-                pkgConfig = "wayland-protocols"),
-        @WaylandCustomProtocol(path = "stable/linux-dmabuf/linux-dmabuf-v1.xml",
-                pkgConfig = "wayland-protocols"),
-        @WaylandCustomProtocol(path = "stable/presentation-time/presentation-time.xml",
-                pkgConfig = "wayland-protocols"),
-        @WaylandCustomProtocol(path = "stable/tablet/tablet-v2.xml",
-                pkgConfig = "wayland-protocols"),
-        @WaylandCustomProtocol(path = "stable/viewporter/viewporter.xml",
-                pkgConfig = "wayland-protocols"),
-})
-
- */
-@WaylandCoreProtocols
+@WaylandCustomProtocols(@WaylandCustomProtocol(path = "wayland.xml", pkgConfig = "wayland-scanner"))
 @WaylandProtocols(withStable = true, withStaging = false, withUnstable = false)
 package org.freedesktop.wayland;
 
-import org.freedesktop.wayland.generator.api.WaylandCoreProtocols;
+import org.freedesktop.wayland.generator.api.WaylandCustomProtocol;
+import org.freedesktop.wayland.generator.api.WaylandCustomProtocols;
 import org.freedesktop.wayland.generator.api.WaylandProtocols;
