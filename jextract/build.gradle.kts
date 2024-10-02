@@ -114,7 +114,8 @@ fun fmtCommandLineArgs(args: List<String>): String {
 // the meat of all this: run the jextract tool with the calculated arguments
 task<Exec>("jextract") {
     val args = buildJextractArgs()
-    val logPath = "${layout.buildDirectory.get()}/jextract.log"
+    val logPath = layout.buildDirectory.file("jextract.log").get().asFile
+    layout.buildDirectory.get().asFile.mkdirs()
     doFirst {
         checkOS()
         assertCliToolsExist()

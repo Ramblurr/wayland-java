@@ -23,7 +23,7 @@ subprojects {
             languageVersion.set(JavaLanguageVersion.of(22))
         }
     }
-    val mavenProjects = arrayOf("wayland-client", "wayland-server")
+    val mavenProjects = arrayOf("wayland-client", "wayland-server", "wayland-scanner")
     if (project.name in mavenProjects) {
 //        apply(plugin = "maven-publish")
 //        apply(plugin = "signing")
