@@ -1,4 +1,4 @@
-rootProject.name = "wayland-java-bindings"
+rootProject.name = "wayland-java"
 
 include(":wayland-native")
 include(":stubs-shared")
