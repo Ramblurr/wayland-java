@@ -1,0 +1,10 @@
+org.freedesktop.wayland
+org.freedesktop.wayland.client
+org.freedesktop.wayland.client.egl
+org.freedesktop.wayland.examples
+org.freedesktop.wayland.generator.api
+org.freedesktop.wayland.generator.impl
+org.freedesktop.wayland.raw
+org.freedesktop.wayland.server
+org.freedesktop.wayland.shared
+org.freedesktop.wayland.util
