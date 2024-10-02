@@ -62,9 +62,7 @@ plugins {
     `maven-publish`
 }
 allprojects {
-    group = "org.freedesktop"
-    version = "0.0.1-SNAPSHOT"
-
+    group = "org.freedesktop.wayland"
     repositories {
         mavenCentral()
         mavenLocal()
@@ -92,10 +90,7 @@ subprojects {
             publications {
                 create<MavenPublication>(project.name) {
                     from(components["java"])
-                }
-                register("mavenJava", MavenPublication::class) {
-                    from(components["java"])
-                    groupId = "org.freedesktop"
+                    groupId = project.group.toString()
                     artifactId = project.name
                     version = waylandJavaVersion
 
