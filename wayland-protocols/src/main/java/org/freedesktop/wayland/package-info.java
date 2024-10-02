@@ -17,6 +17,7 @@
  *
  */
 /*
+An example for custom protocols:
 @WaylandCustomProtocols({
         @WaylandCustomProtocol(path = "wayland.xml",
                 pkgConfig = "wayland-scanner"),
