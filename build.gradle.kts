@@ -66,8 +66,8 @@ allprojects {
     version = "0.0.1-SNAPSHOT"
 
     repositories {
-        mavenLocal()
         mavenCentral()
+        mavenLocal()
     }
 }
 
@@ -100,8 +100,8 @@ subprojects {
                     version = waylandJavaVersion
 
                     pom {
-                        name = "wayland-java"
-                        description = "Wayland bindings for java/jvm"
+                        name = project.name
+                        description = project.description
                         url = "https://github.com/ramblurr/wayland-java"
                         licenses {
                             license {

@@ -2,7 +2,7 @@ import org.apache.tools.ant.taskdefs.condition.Os
 import java.io.ByteArrayOutputStream
 import java.io.FileOutputStream
 
-description = "jextract generated native wrappers for wayland-java"
+description = "jextract generated native wrappers for libwayland and parts of libc"
 
 tasks.named<Javadoc>("javadoc") {
     source += fileTree("build/generated/sources/jextract/java/main")

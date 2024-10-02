@@ -25,7 +25,6 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
-import javax.tools.Diagnostic;
 import java.util.Set;
 
 @SupportedAnnotationTypes("org.freedesktop.wayland.generator.api.Protocols")
@@ -45,10 +44,16 @@ public class ProtocolsProcessor extends AbstractProcessor {
                             this.processingEnv.getFiler(),
                             protocol);
                 } catch (final Exception e) {
-                    this.processingEnv.getMessager()
-                            .printMessage(Diagnostic.Kind.ERROR,
-                                    "Got an error while trying to process protocolXML: " + e.getMessage());
+                    this.processingEnv
+                            .getMessager()
+                            .printError(e.getMessage());
                     e.printStackTrace();
+                    this.processingEnv
+                            .getMessager()
+                            .printError(String.format(
+                                    "wayland-scanner got an error while trying to generate java bindings from a protocol xml. protocol was '%s'",
+                                    protocol.toString()
+                            ), elem);
                 }
             }
         }

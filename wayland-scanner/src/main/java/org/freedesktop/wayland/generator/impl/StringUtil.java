@@ -19,68 +19,75 @@
  */
 package org.freedesktop.wayland.generator.impl;
 
-import com.google.common.base.CaseFormat;
-import com.google.common.collect.Sets;
 import org.freedesktop.wayland.util.Fixed;
 import org.freedesktop.wayland.util.WlArray;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public class StringUtil {
 
-    private static final Set<String> keywords = Sets.newHashSet("abstract",
-            "continue",
-            "for",
-            "new",
-            "switch",
-            "assert",
-            "default",
-            "if",
-            "package",
-            "synchronized",
-            "boolean",
-            "do",
-            "goto",
-            "private",
-            "this",
-            "break",
-            "double",
-            "implements",
-            "protected",
-            "throw",
-            "byte",
-            "else",
-            "import",
-            "public",
-            "throws",
-            "case",
-            "enum",
-            "instanceof",
-            "return",
-            "transient",
-            "catch",
-            "extends",
-            "int",
-            "short",
-            "try",
-            "char",
-            "final",
-            "interface",
-            "static",
-            "void",
-            "class",
-            "finally",
-            "long",
-            "strictfp",
-            "volatile",
-            "const",
-            "float",
-            "native",
-            "super",
-            "while");
+    private static final Set<String> keywords;
+
+    static {
+        keywords = new HashSet<>();
+        Collections.addAll(keywords,
+                "abstract",
+                "continue",
+                "for",
+                "new",
+                "switch",
+                "assert",
+                "default",
+                "if",
+                "package",
+                "synchronized",
+                "boolean",
+                "do",
+                "goto",
+                "private",
+                "this",
+                "break",
+                "double",
+                "implements",
+                "protected",
+                "throw",
+                "byte",
+                "else",
+                "import",
+                "public",
+                "throws",
+                "case",
+                "enum",
+                "instanceof",
+                "return",
+                "transient",
+                "catch",
+                "extends",
+                "int",
+                "short",
+                "try",
+                "char",
+                "final",
+                "interface",
+                "static",
+                "void",
+                "class",
+                "finally",
+                "long",
+                "strictfp",
+                "volatile",
+                "const",
+                "float",
+                "native",
+                "super",
+                "while");
+    }
+
     private static final Set<String> PRIMITIVE_TYPES = new HashSet<String>() {{
         add(byte.class.getName());
         add(short.class.getName());
@@ -109,9 +116,28 @@ public class StringUtil {
                 enumNode.getAttribute(InterfaceWriter.ATTRIBUTE_NAME));
     }
 
-    public static String upperCamelName(final String lowerUnderScoreName) {
-        return CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL,
-                lowerUnderScoreName);
+    public static String upperCamelName(String string) {
+        Objects.requireNonNull(string);
+        if (string.isEmpty()) return string;
+        String[] words = string.split("_");
+        string = "";
+        for (int i = 0; i < words.length; ++i) {
+            String firstChar = words[i].substring(0, 1);
+            string = string + firstChar.toUpperCase() + words[i].substring(1);
+        }
+        return string;
+    }
+
+    public static String lowerCamelName(String string) {
+        Objects.requireNonNull(string);
+        if (string.isEmpty()) return string;
+        String[] words = string.split("_");
+        string = words[0];
+        for (int i = 1; i < words.length; ++i) {
+            String firstChar = words[i].substring(0, 1);
+            string = string + firstChar.toUpperCase() + words[i].substring(1);
+        }
+        return string;
     }
 
     public static String getJavaTypeNameResource(final String serverPackage,
@@ -205,11 +231,6 @@ public class StringUtil {
         }
 
         return arg;
-    }
-
-    public static String lowerCamelName(final String lowerUnderScoreName) {
-        return CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL,
-                lowerUnderScoreName);
     }
 
     public static char toSignatureChar(final Element argElement) {

@@ -8,4 +8,4 @@ dependencies {
     testImplementation(libs.org.slf4j.slf4j.simple)
 }
 
-description = "stubs-client"
+description = "Client stubs for generated wayland bindings"
