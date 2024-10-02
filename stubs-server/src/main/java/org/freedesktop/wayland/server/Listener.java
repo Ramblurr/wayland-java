@@ -18,10 +18,11 @@
  */
 package org.freedesktop.wayland.server;
 
-import org.freedesktop.wayland.C;
+import org.freedesktop.wayland.raw.C;
+import org.freedesktop.wayland.raw.LibWayland;
 import org.freedesktop.wayland.util.Memory;
 import org.freedesktop.wayland.util.ObjectCache;
-import org.freedesktop.wayland.wl_listener;
+import org.freedesktop.wayland.raw.wl_listener;
 import org.slf4j.LoggerFactory;
 
 import java.lang.foreign.Arena;
@@ -102,7 +103,7 @@ abstract class Listener {
     }
 
     public void remove() {
-        C.wl_list_remove(wl_listener.link(this.wlListenerPointer));
+        LibWayland.wl_list_remove(wl_listener.link(this.wlListenerPointer));
     }
 
     public void destroy() {

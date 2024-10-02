@@ -18,7 +18,8 @@
  */
 package org.freedesktop.wayland.server;
 
-import org.freedesktop.wayland.C;
+import org.freedesktop.wayland.raw.C;
+import org.freedesktop.wayland.raw.LibWayland;
 
 import java.lang.foreign.MemorySegment;
 
@@ -33,15 +34,15 @@ public final class EventSource {
     }
 
     public int updateFileDescriptor(final int mask) {
-        return C.wl_event_source_fd_update(this.wlEventSource, mask);
+        return LibWayland.wl_event_source_fd_update(this.wlEventSource, mask);
     }
 
     public int updateTimer(final int msDelay) {
-        return C.wl_event_source_timer_update(this.wlEventSource, msDelay);
+        return LibWayland.wl_event_source_timer_update(this.wlEventSource, msDelay);
     }
 
     public void check() {
-        C.wl_event_source_check(this.wlEventSource);
+        LibWayland.wl_event_source_check(this.wlEventSource);
     }
 
     @Override
@@ -65,6 +66,6 @@ public final class EventSource {
     }
 
     public int remove() {
-        return C.wl_event_source_remove(this.wlEventSource);
+        return LibWayland.wl_event_source_remove(this.wlEventSource);
     }
 }

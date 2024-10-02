@@ -17,8 +17,8 @@
 
 package org.freedesktop.wayland.util;
 
-import org.freedesktop.wayland.C;
-import org.freedesktop.wayland.wl_array;
+import org.freedesktop.wayland.raw.C;
+import org.freedesktop.wayland.raw.wl_array;
 
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;

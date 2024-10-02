@@ -1,6 +1,6 @@
 dependencies {
     api(project(":stubs-shared"))
-    api(project(":jextract"))
+    api(project(":wayland-native"))
     api(libs.org.slf4j.slf4j.api)
     api(libs.com.kohlschutter.junixsocket.junixsocket.core)
     testImplementation(libs.org.junit.jupiter.junit.jupiter)

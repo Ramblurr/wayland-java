@@ -18,7 +18,8 @@
  */
 package org.freedesktop.wayland.server;
 
-import org.freedesktop.wayland.C;
+import org.freedesktop.wayland.raw.C;
+import org.freedesktop.wayland.raw.LibWayland;
 import org.freedesktop.wayland.util.ObjectCache;
 
 import java.lang.foreign.Arena;
@@ -56,7 +57,7 @@ public class Client {
      */
     public static Client create(final Display display,
                                 final int fd) {
-        return Client.get(C.wl_client_create(display.pointer, fd));
+        return Client.get(LibWayland.wl_client_create(display.pointer, fd));
     }
 
     public static Client get(final MemorySegment pointer) {
@@ -72,11 +73,11 @@ public class Client {
      * flushes all queued up events for a client immediately.
      */
     public void flush() {
-        C.wl_client_flush(this.pointer);
+        LibWayland.wl_client_flush(this.pointer);
     }
 
     protected void addDestroyListener(final Listener listener) {
-        C.wl_client_add_destroy_listener(this.pointer, listener.wlListenerPointer);
+        LibWayland.wl_client_add_destroy_listener(this.pointer, listener.wlListenerPointer);
     }
 
     //TODO wl_client_get_object
@@ -90,7 +91,7 @@ public class Client {
      * @return The display object the client is associated with.
      */
     public Display getDisplay() {
-        return Display.get(C.wl_client_get_display(this.pointer));
+        return Display.get(LibWayland.wl_client_get_display(this.pointer));
     }
 
     /**
@@ -101,7 +102,7 @@ public class Client {
      * @return The object or null if there is not object for the given ID
      */
     public Resource<?> getObject(final int id) {
-        return ObjectCache.from(C.wl_client_get_object(this.pointer, id));
+        return ObjectCache.from(LibWayland.wl_client_get_object(this.pointer, id));
     }
 
     /**
@@ -121,7 +122,7 @@ public class Client {
             MemorySegment pid = a.allocate(C.pid_t);
             MemorySegment uid = a.allocate(C.pid_t);
             MemorySegment gid = a.allocate(C.pid_t);
-            C.wl_client_get_credentials(this.pointer, pid, uid, gid);
+            LibWayland.wl_client_get_credentials(this.pointer, pid, uid, gid);
 
             return new ClientCredentials(
                     pid.get(C.pid_t, 0),
@@ -132,7 +133,7 @@ public class Client {
     }
 
     public void destroy() {
-        C.wl_client_destroy(this.pointer);
+        LibWayland.wl_client_destroy(this.pointer);
     }
 
     @Override

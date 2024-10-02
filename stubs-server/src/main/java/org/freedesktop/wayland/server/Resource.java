@@ -18,9 +18,10 @@
  */
 package org.freedesktop.wayland.server;
 
-import org.freedesktop.wayland.C;
+import org.freedesktop.wayland.raw.C;
+import org.freedesktop.wayland.raw.LibWayland;
 import org.freedesktop.wayland.util.*;
-import org.freedesktop.wayland.wl_resource_destroy_func_t;
+import org.freedesktop.wayland.raw.wl_resource_destroy_func_t;
 
 import java.lang.foreign.MemorySegment;
 import java.util.HashSet;
@@ -57,7 +58,7 @@ public abstract class Resource<I> implements WaylandObject {
                        final int id,
                        final I implementation) {
         this.implementation = implementation;
-        this.wlResourcePtr = C.wl_resource_create(
+        this.wlResourcePtr = LibWayland.wl_resource_create(
                 client.pointer,
                 InterfaceMeta.get(getClass()).getNativeWlInterface(),
                 version,
@@ -65,7 +66,7 @@ public abstract class Resource<I> implements WaylandObject {
         ObjectCache.store(this.wlResourcePtr, this);
         this.jObjectRef = GlobalRef.from(this);
 
-        C.wl_resource_set_dispatcher(
+        LibWayland.wl_resource_set_dispatcher(
                 this.wlResourcePtr,
                 Dispatcher.INSTANCE,
                 jObjectRef,
@@ -98,7 +99,7 @@ public abstract class Resource<I> implements WaylandObject {
     }
 
     protected void addDestroyListener(final Listener listener) {
-        C.wl_resource_add_destroy_listener(this.wlResourcePtr, listener.wlListenerPointer);
+        LibWayland.wl_resource_add_destroy_listener(this.wlResourcePtr, listener.wlListenerPointer);
     }
 
     private void notifyDestroyListeners() {
@@ -113,16 +114,16 @@ public abstract class Resource<I> implements WaylandObject {
 
     public Client getClient() {
         return Client.get(
-                C.wl_resource_get_client(this.wlResourcePtr)
+                LibWayland.wl_resource_get_client(this.wlResourcePtr)
         );
     }
 
     public int getId() {
-        return C.wl_resource_get_id(this.wlResourcePtr);
+        return LibWayland.wl_resource_get_id(this.wlResourcePtr);
     }
 
     public int getVersion() {
-        return C.wl_resource_get_version(this.wlResourcePtr);
+        return LibWayland.wl_resource_get_version(this.wlResourcePtr);
     }
 
     public void register(final DestroyListener destroyListener) {
@@ -156,7 +157,7 @@ public abstract class Resource<I> implements WaylandObject {
      */
     public void postEvent(final int opcode,
                           final Arguments args) {
-        C.wl_resource_post_event_array(this.wlResourcePtr, opcode, args.pointer);
+        LibWayland.wl_resource_post_event_array(this.wlResourcePtr, opcode, args.pointer);
         // TODO deallocate the arguments array here
 //        args.pointer.close();
     }
@@ -166,12 +167,12 @@ public abstract class Resource<I> implements WaylandObject {
      * @see #postEvent(int, org.freedesktop.wayland.util.Arguments)
      */
     public void postEvent(final int opcode) {
-        C.wl_resource_post_event_array(this.wlResourcePtr, opcode, MemorySegment.NULL);
+        LibWayland.wl_resource_post_event_array(this.wlResourcePtr, opcode, MemorySegment.NULL);
     }
 
     public void postError(final int code,
                           final String msg) {
-        C.wl_resource_post_error invoker = C.wl_resource_post_error.makeInvoker(C.C_POINTER);
+        LibWayland.wl_resource_post_error invoker = LibWayland.wl_resource_post_error.makeInvoker(C.C_POINTER);
         invoker.apply(this.wlResourcePtr, code, Memory.ARENA_AUTO.allocateFrom(msg));
     }
 
@@ -195,7 +196,7 @@ public abstract class Resource<I> implements WaylandObject {
     }
 
     public void destroy() {
-        C.wl_resource_destroy(this.wlResourcePtr);
+        LibWayland.wl_resource_destroy(this.wlResourcePtr);
     }
 
     @Override

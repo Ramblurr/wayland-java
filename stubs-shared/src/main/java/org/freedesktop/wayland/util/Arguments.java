@@ -18,8 +18,8 @@
  */
 package org.freedesktop.wayland.util;
 
-import org.freedesktop.wayland.wl_argument;
-import org.freedesktop.wayland.wl_array;
+import org.freedesktop.wayland.raw.wl_argument;
+import org.freedesktop.wayland.raw.wl_array;
 
 import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;

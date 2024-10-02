@@ -19,7 +19,7 @@
 
 package org.freedesktop.wayland.util;
 
-import org.freedesktop.wayland.C;
+import org.freedesktop.wayland.raw.C;
 
 import java.lang.foreign.MemorySegment;
 

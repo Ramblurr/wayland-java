@@ -18,7 +18,8 @@
  */
 package org.freedesktop.wayland.client;
 
-import org.freedesktop.wayland.C;
+import org.freedesktop.wayland.raw.C;
+import org.freedesktop.wayland.raw.LibWayland;
 import org.freedesktop.wayland.util.ObjectCache;
 
 import java.lang.foreign.MemorySegment;
@@ -77,7 +78,7 @@ public class EventQueue {
      * this function.
      */
     public void destroy() {
-        C.wl_event_queue_destroy(this.pointer);
+        LibWayland.wl_event_queue_destroy(this.pointer);
         ObjectCache.remove(this.pointer);
     }
 }

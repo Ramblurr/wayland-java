@@ -1,6 +1,6 @@
 rootProject.name = "wayland-java-bindings"
 
-include(":jextract")
+include(":wayland-native")
 include(":stubs-shared")
 include(":wayland-scanner")
 include(":stubs-server")

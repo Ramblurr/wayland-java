@@ -18,7 +18,8 @@
  */
 package org.freedesktop.wayland.server;
 
-import org.freedesktop.wayland.C;
+import org.freedesktop.wayland.raw.C;
+import org.freedesktop.wayland.raw.LibWayland;
 import org.freedesktop.wayland.util.GlobalRef;
 import org.freedesktop.wayland.util.Memory;
 import org.freedesktop.wayland.util.ObjectCache;
@@ -118,7 +119,7 @@ public class EventLoop {
 
     private EventLoop(final MemorySegment pointer) {
         this.pointer = pointer;
-        C.wl_event_loop_add_destroy_listener(this.pointer,
+        LibWayland.wl_event_loop_add_destroy_listener(this.pointer,
                 Listener.create(() -> {
                     notifyDestroyListeners();
                     EventLoop.this.destroyListeners.clear();
@@ -134,7 +135,7 @@ public class EventLoop {
     }
 
     public static EventLoop create() {
-        return EventLoop.get(C.wl_event_loop_create());
+        return EventLoop.get(LibWayland.wl_event_loop_create());
     }
 
     public static EventLoop get(final MemorySegment eventLoopPointer) {
@@ -152,7 +153,7 @@ public class EventLoop {
                                          final int mask,
                                          final FileDescriptorEventHandler handler) {
         MemorySegment jObjectRef = GlobalRef.from(handler);
-        MemorySegment eventSourcePtr = C.wl_event_loop_add_fd(
+        MemorySegment eventSourcePtr = LibWayland.wl_event_loop_add_fd(
                 this.pointer,
                 fd,
                 mask,
@@ -166,7 +167,7 @@ public class EventLoop {
 
     public EventSource addTimer(final TimerEventHandler handler) {
         MemorySegment jObjectRef = GlobalRef.from(handler);
-        MemorySegment eventSourcePtr = C.wl_event_loop_add_timer(
+        MemorySegment eventSourcePtr = LibWayland.wl_event_loop_add_timer(
                 this.pointer,
                 WL_EVENT_LOOP_TIMER_FUNC,
                 jObjectRef
@@ -178,7 +179,7 @@ public class EventLoop {
 
     public EventSource addSignal(final int signalNumber, final SignalEventHandler handler) {
         MemorySegment jObjectRef = GlobalRef.from(handler);
-        MemorySegment eventSourcePtr = C.wl_event_loop_add_signal(
+        MemorySegment eventSourcePtr = LibWayland.wl_event_loop_add_signal(
                 this.pointer,
                 signalNumber,
                 WL_EVENT_LOOP_SIGNAL_FUNC,
@@ -192,7 +193,7 @@ public class EventLoop {
 
     public EventSource addIdle(final IdleHandler handler) {
         MemorySegment jObjectRef = GlobalRef.from(handler);
-        MemorySegment eventSourcePtr = C.wl_event_loop_add_idle(
+        MemorySegment eventSourcePtr = LibWayland.wl_event_loop_add_idle(
                 this.pointer,
                 WL_EVENT_LOOP_IDLE_FUNC,
                 jObjectRef
@@ -204,15 +205,15 @@ public class EventLoop {
     }
 
     public int dispatch(final int timeout) {
-        return C.wl_event_loop_dispatch(this.pointer, timeout);
+        return LibWayland.wl_event_loop_dispatch(this.pointer, timeout);
     }
 
     public void dispatchIdle() {
-        C.wl_event_loop_dispatch_idle(this.pointer);
+        LibWayland.wl_event_loop_dispatch_idle(this.pointer);
     }
 
     public int getFileDescriptor() {
-        return C.wl_event_loop_get_fd(this.pointer);
+        return LibWayland.wl_event_loop_get_fd(this.pointer);
     }
 
     public void register(final DestroyListener destroyListener) {
@@ -243,7 +244,7 @@ public class EventLoop {
     }
 
     public void destroy() {
-        C.wl_event_loop_destroy(this.pointer);
+        LibWayland.wl_event_loop_destroy(this.pointer);
         ObjectCache.remove(this.pointer);
     }
 

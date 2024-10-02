@@ -39,7 +39,7 @@ public class EglWindow {
                                    final int height) {
         // TODO implement when we jextract the egl header
 //        return EglWindow.get(
-//                C.wl_egl_window_create(wlSurfaceProxy.pointer,
+//                LibWayland.wl_egl_window_create(wlSurfaceProxy.pointer,
 //                        width,
 //                        height)
 //        );
@@ -59,7 +59,7 @@ public class EglWindow {
                        final int dx,
                        final int dy) {
         /*
-        C.wl_egl_window_resize(this.pointer,
+        LibWayland.wl_egl_window_resize(this.pointer,
                 width,
                 height,
                 dx,
@@ -74,7 +74,7 @@ public class EglWindow {
         try (Arena arena = Arena.ofAuto()) {
             final var x = arena.allocateFrom(C.C_INT);
             final var y = arena.allocateFrom(C.C_INT);
-            C.wl_egl_window_get_attached_size(this.pointer,
+            LibWayland.wl_egl_window_get_attached_size(this.pointer,
                     x,
                     y
             );
@@ -86,7 +86,7 @@ public class EglWindow {
     }
 
     public void destroy() {
-        // TODO uncomment egl C.wl_egl_window_destroy(this.pointer);
+        // TODO uncomment egl LibWayland.wl_egl_window_destroy(this.pointer);
         ObjectCache.remove(this.pointer);
     }
 

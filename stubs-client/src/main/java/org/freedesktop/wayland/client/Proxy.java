@@ -19,7 +19,8 @@
  */
 package org.freedesktop.wayland.client;
 
-import org.freedesktop.wayland.C;
+import org.freedesktop.wayland.raw.C;
+import org.freedesktop.wayland.raw.LibWayland;
 import org.freedesktop.wayland.util.*;
 
 import java.lang.foreign.MemorySegment;
@@ -78,7 +79,7 @@ public abstract class Proxy<I> implements WaylandObject {
         //Special casing implementation. For some proxies the underlying native library provides its own implementation.
         //We pass in a null implementation in those cases. (Eg Display proxy).
         if (implementation != null) {
-            C.wl_proxy_add_dispatcher(this.pointer,
+            LibWayland.wl_proxy_add_dispatcher(this.pointer,
                     Dispatcher.INSTANCE,
                     jObjectRef,
                     MemorySegment.NULL
@@ -103,7 +104,7 @@ public abstract class Proxy<I> implements WaylandObject {
      */
     protected void marshal(final int opcode,
                            final Arguments args) {
-        C.wl_proxy_marshal_array(this.pointer,
+        LibWayland.wl_proxy_marshal_array(this.pointer,
                 opcode,
                 args.pointer);
         // TODO cleanup args.pointer!
@@ -115,7 +116,7 @@ public abstract class Proxy<I> implements WaylandObject {
      * see {link #marshal(int, Arguments)}
      */
     protected void marshal(final int opcode) {
-        C.wl_proxy_marshal_array(this.pointer,
+        LibWayland.wl_proxy_marshal_array(this.pointer,
                 opcode,
                 MemorySegment.NULL
         );
@@ -168,7 +169,7 @@ public abstract class Proxy<I> implements WaylandObject {
                                                          final Class<T> newProxyCls,
                                                          final MemorySegment argsPointer) {
         try {
-            final var wlProxy = C.wl_proxy_marshal_array_constructor(this.pointer,
+            final var wlProxy = LibWayland.wl_proxy_marshal_array_constructor(this.pointer,
                     opcode,
                     argsPointer,
                     InterfaceMeta.get(newProxyCls).wlInterfacePointer);
@@ -244,7 +245,7 @@ public abstract class Proxy<I> implements WaylandObject {
      * @return The id the object associated with the proxy
      */
     public int getId() {
-        return C.wl_proxy_get_id(this.pointer);
+        return LibWayland.wl_proxy_get_id(this.pointer);
     }
 
     public int getVersion() {
@@ -261,7 +262,7 @@ public abstract class Proxy<I> implements WaylandObject {
      * @see Display#dispatchQueue(EventQueue)
      */
     public void setQueue(final EventQueue queue) {
-        C.wl_proxy_set_queue(this.pointer, queue.pointer);
+        LibWayland.wl_proxy_set_queue(this.pointer, queue.pointer);
     }
 
     @Override
@@ -287,7 +288,7 @@ public abstract class Proxy<I> implements WaylandObject {
      * Destroy a proxy object
      */
     public void destroy() {
-        C.wl_proxy_destroy(this.pointer);
+        LibWayland.wl_proxy_destroy(this.pointer);
         ObjectCache.remove(this.pointer);
         GlobalRef.remove(jObjectRef);
     }

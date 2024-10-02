@@ -14,6 +14,7 @@ val gitDescribe: String? by lazy {
     try {
         rootProject.exec {
             commandLine("git", "describe", "--tags")
+            errorOutput = null
             standardOutput = stdout
         }
         stdout.toString().trim().replace("-g", "-")
@@ -78,7 +79,7 @@ subprojects {
             languageVersion.set(JavaLanguageVersion.of(22))
         }
     }
-    val mavenProjects = arrayOf("wayland-client", "wayland-server", "wayland-scanner", "stubs-shared", "jextract", "stubs-client", "stubs-server")
+    val mavenProjects = arrayOf("wayland-client", "wayland-server", "wayland-scanner", "stubs-shared", "wayland-native", "stubs-client", "stubs-server")
     if (project.name in mavenProjects) {
         apply(plugin = "maven-publish")
 //        apply(plugin = "signing")

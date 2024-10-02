@@ -18,12 +18,13 @@
  */
 package org.freedesktop.wayland.server;
 
-import org.freedesktop.wayland.C;
+import org.freedesktop.wayland.raw.C;
+import org.freedesktop.wayland.raw.LibWayland;
 import org.freedesktop.wayland.util.GlobalRef;
 import org.freedesktop.wayland.util.InterfaceMeta;
 import org.freedesktop.wayland.util.Memory;
 import org.freedesktop.wayland.util.ObjectCache;
-import org.freedesktop.wayland.wl_global_bind_func_t;
+import org.freedesktop.wayland.raw.wl_global_bind_func_t;
 
 import java.lang.foreign.MemorySegment;
 
@@ -49,7 +50,7 @@ public abstract class Global<R extends Resource<?>> {
 
         this.jObjectPointer = GlobalRef.from(this);
 
-        this.pointer = C.wl_global_create(display.pointer,
+        this.pointer = LibWayland.wl_global_create(display.pointer,
                 InterfaceMeta.get(resourceClass)
                         .getNativeWlInterface(),
                 version,
@@ -82,7 +83,7 @@ public abstract class Global<R extends Resource<?>> {
     }
 
     public void destroy() {
-        C.wl_global_destroy(this.pointer);
+        LibWayland.wl_global_destroy(this.pointer);
         ObjectCache.remove(this.pointer);
         GlobalRef.remove(jObjectPointer);
     }

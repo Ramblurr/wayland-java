@@ -18,7 +18,8 @@
  */
 package org.freedesktop.wayland.client;
 
-import org.freedesktop.wayland.C;
+import org.freedesktop.wayland.raw.C;
+import org.freedesktop.wayland.raw.LibWayland;
 import org.freedesktop.wayland.util.Memory;
 
 import java.lang.foreign.MemorySegment;
@@ -86,21 +87,21 @@ public abstract class Display extends Proxy<Void> {
     public static final int OBJECT_ID = 1;
 
     protected static MemorySegment _connect(String name) {
-        var ptr = C.wl_display_connect(Memory.ARENA_AUTO.allocateFrom(name));
+        var ptr = LibWayland.wl_display_connect(Memory.ARENA_AUTO.allocateFrom(name));
         if (MemorySegment.NULL.equals(ptr))
             throw new RuntimeException("Unable to connect to display with name " + name);
         return ptr;
     }
 
     protected static MemorySegment _connect(int fd) {
-        var ptr = C.wl_display_connect_to_fd(fd);
+        var ptr = LibWayland.wl_display_connect_to_fd(fd);
         if (MemorySegment.NULL.equals(ptr))
             throw new RuntimeException("Unable to connect to display with file descriptor " + fd);
         return ptr;
     }
 
     public static MemorySegment _connect() {
-        var ptr = C.wl_display_connect(MemorySegment.NULL);
+        var ptr = LibWayland.wl_display_connect(MemorySegment.NULL);
         if (MemorySegment.NULL.equals(ptr))
             throw new RuntimeException("Unable to auto connect to a display");
         return ptr;
@@ -120,7 +121,7 @@ public abstract class Display extends Proxy<Void> {
      * with it.
      */
     public void disconnect() {
-        C.wl_display_disconnect(this.pointer);
+        LibWayland.wl_display_disconnect(this.pointer);
     }
 
     /**
@@ -132,7 +133,7 @@ public abstract class Display extends Proxy<Void> {
      * @return Display object file descriptor
      */
     public int getFD() {
-        return C.wl_display_get_fd(this.pointer);
+        return LibWayland.wl_display_get_fd(this.pointer);
     }
 
     /**
@@ -156,7 +157,7 @@ public abstract class Display extends Proxy<Void> {
      * @see #dispatchQueue(EventQueue)
      */
     public int dispatch() {
-        return C.wl_display_dispatch(this.pointer);
+        return LibWayland.wl_display_dispatch(this.pointer);
     }
 
     /**
@@ -196,7 +197,7 @@ public abstract class Display extends Proxy<Void> {
      * @see #flush()
      */
     public int dispatchPending() {
-        return C.wl_display_dispatch_pending(this.pointer);
+        return LibWayland.wl_display_dispatch_pending(this.pointer);
     }
 
     /**
@@ -214,7 +215,7 @@ public abstract class Display extends Proxy<Void> {
      * @return The number of dispatched events on success or -1 on failure
      */
     public int dispatchQueue(final EventQueue queue) {
-        return C.wl_display_dispatch_queue(this.pointer,
+        return LibWayland.wl_display_dispatch_queue(this.pointer,
                 queue.pointer);
     }
 
@@ -230,7 +231,7 @@ public abstract class Display extends Proxy<Void> {
      * @since 1.0.2
      */
     public int dispatchQueuePending(final EventQueue queue) {
-        return C.wl_display_dispatch_queue_pending(this.pointer,
+        return LibWayland.wl_display_dispatch_queue_pending(this.pointer,
                 queue.pointer);
     }
 
@@ -250,7 +251,7 @@ public abstract class Display extends Proxy<Void> {
      * @return The number of bytes sent on success or -1 on failure
      */
     public int flush() {
-        return C.wl_display_flush(this.pointer);
+        return LibWayland.wl_display_flush(this.pointer);
     }
 
     /**
@@ -262,7 +263,7 @@ public abstract class Display extends Proxy<Void> {
      * @return The number of dispatched events on success or -1 on failure
      */
     public int roundtrip() {
-        return C.wl_display_roundtrip(this.pointer);
+        return LibWayland.wl_display_roundtrip(this.pointer);
     }
 
     /**
@@ -273,7 +274,7 @@ public abstract class Display extends Proxy<Void> {
      * failure.
      */
     public EventQueue createQueue() {
-        return new EventQueue(C.wl_display_create_queue(this.pointer));
+        return new EventQueue(LibWayland.wl_display_create_queue(this.pointer));
     }
 
     /**
@@ -288,11 +289,11 @@ public abstract class Display extends Proxy<Void> {
      * @return The last error that occurred on display or 0 if no error occurred
      */
     public int getError() {
-        return C.wl_display_get_error(this.pointer);
+        return LibWayland.wl_display_get_error(this.pointer);
     }
 
     public int prepareReadQueue(final EventQueue queue) {
-        return C.wl_display_prepare_read_queue(this.pointer, queue.pointer);
+        return LibWayland.wl_display_prepare_read_queue(this.pointer, queue.pointer);
     }
 
     /**
@@ -363,7 +364,7 @@ public abstract class Display extends Proxy<Void> {
      * @return 0 on success or -1 if event queue was not empty
      */
     public int prepareRead() {
-        return C.wl_display_prepare_read(this.pointer);
+        return LibWayland.wl_display_prepare_read(this.pointer);
     }
 
     /**
@@ -374,7 +375,7 @@ public abstract class Display extends Proxy<Void> {
      * to read from the fd anytime soon.
      */
     public void cancelRead() {
-        C.wl_display_cancel_read(this.pointer);
+        LibWayland.wl_display_cancel_read(this.pointer);
     }
 
     /**
@@ -395,7 +396,7 @@ public abstract class Display extends Proxy<Void> {
      * be set accordingly
      */
     public int readEvents() {
-        return C.wl_display_read_events(this.pointer);
+        return LibWayland.wl_display_read_events(this.pointer);
     }
 }
 

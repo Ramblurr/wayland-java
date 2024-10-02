@@ -19,7 +19,8 @@
 
 package org.freedesktop.wayland.server;
 
-import org.freedesktop.wayland.C;
+import org.freedesktop.wayland.raw.C;
+import org.freedesktop.wayland.raw.LibWayland;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -57,7 +58,7 @@ public class EventLoopTest {
             var r = pair.getFirst();
             var r_fd = getFd(r);
             var source = eventLoop.addFileDescriptor(r_fd,
-                    C.WL_EVENT_READABLE(),
+                    LibWayland.WL_EVENT_READABLE(),
                     (fd, mask) -> {
                         thing.fd_or_signal_number = fd;
                         thing.nCalls += 1;

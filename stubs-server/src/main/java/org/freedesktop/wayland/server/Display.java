@@ -18,7 +18,8 @@
  */
 package org.freedesktop.wayland.server;
 
-import org.freedesktop.wayland.C;
+import org.freedesktop.wayland.raw.C;
+import org.freedesktop.wayland.raw.LibWayland;
 import org.freedesktop.wayland.util.Memory;
 import org.freedesktop.wayland.util.ObjectCache;
 
@@ -48,7 +49,7 @@ public class Display {
     }
 
     protected void addDestroyListener(final Listener listener) {
-        C.wl_display_add_destroy_listener(this.pointer, listener.wlListenerPointer);
+        LibWayland.wl_display_add_destroy_listener(this.pointer, listener.wlListenerPointer);
     }
 
     private void notifyDestroyListeners() {
@@ -63,7 +64,7 @@ public class Display {
      * @return The Wayland display object. Null if failed to create
      */
     public static Display create() {
-        return Display.get(C.wl_display_create());
+        return Display.get(LibWayland.wl_display_create());
     }
 
     public static Display get(final MemorySegment pointer) {
@@ -93,26 +94,26 @@ public class Display {
      */
 
     public int addSocket(final String name) {
-        return C.wl_display_add_socket(this.pointer, Memory.ARENA_AUTO.allocateFrom(name));
+        return LibWayland.wl_display_add_socket(this.pointer, Memory.ARENA_AUTO.allocateFrom(name));
     }
 
     public String addSocketAuto() {
-        var namePtr = C.wl_display_add_socket_auto(this.pointer);
+        var namePtr = LibWayland.wl_display_add_socket_auto(this.pointer);
         if (MemorySegment.NULL.equals(namePtr))
             throw new RuntimeException("wl_display_add_socket_auto failed");
         return namePtr.getString(0);
     }
 
     public void terminate() {
-        C.wl_display_terminate(this.pointer);
+        LibWayland.wl_display_terminate(this.pointer);
     }
 
     public void run() {
-        C.wl_display_run(this.pointer);
+        LibWayland.wl_display_run(this.pointer);
     }
 
     public void flushClients() {
-        C.wl_display_flush_clients(this.pointer);
+        LibWayland.wl_display_flush_clients(this.pointer);
     }
 
     /**
@@ -120,18 +121,18 @@ public class Display {
      * it.
      */
     public int getSerial() {
-        return C.wl_display_get_serial(this.pointer);
+        return LibWayland.wl_display_get_serial(this.pointer);
     }
 
     /**
      * Get the next serial number <p> This function increments the display serial number and returns the new value.
      */
     public int nextSerial() {
-        return C.wl_display_next_serial(this.pointer);
+        return LibWayland.wl_display_next_serial(this.pointer);
     }
 
     public EventLoop getEventLoop() {
-        return EventLoop.get(C.wl_display_get_event_loop(this.pointer));
+        return EventLoop.get(LibWayland.wl_display_get_event_loop(this.pointer));
     }
 
     public void register(final DestroyListener destroyListener) {
@@ -143,7 +144,7 @@ public class Display {
     }
 
     public int initShm() {
-        return C.wl_display_init_shm(this.pointer);
+        return LibWayland.wl_display_init_shm(this.pointer);
     }
 
     /**
@@ -157,7 +158,7 @@ public class Display {
      * @return The wl_shm format that was added to the list or 0 if adding it to the list failed.
      */
     public int addShmFormat(final int format) {
-        var ret = C.wl_display_add_shm_format(this.pointer, format);
+        var ret = LibWayland.wl_display_add_shm_format(this.pointer, format);
         if (MemorySegment.NULL.equals(ret))
             return 0;
         return ret.get(C.C_INT, 0);
@@ -194,6 +195,6 @@ public class Display {
      * @see #addDestroyListener(Listener)
      */
     public void destroy() {
-        C.wl_display_destroy(this.pointer);
+        LibWayland.wl_display_destroy(this.pointer);
     }
 }

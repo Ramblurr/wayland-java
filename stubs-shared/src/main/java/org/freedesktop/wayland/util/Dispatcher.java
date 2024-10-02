@@ -19,7 +19,7 @@
 package org.freedesktop.wayland.util;
 
 
-import org.freedesktop.wayland.wl_dispatcher_func_t;
+import org.freedesktop.wayland.raw.wl_dispatcher_func_t;
 
 import java.lang.foreign.MemorySegment;
 import java.lang.reflect.Constructor;

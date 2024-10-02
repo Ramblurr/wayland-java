@@ -18,7 +18,8 @@
  */
 package org.freedesktop.wayland.server;
 
-import org.freedesktop.wayland.C;
+import org.freedesktop.wayland.raw.C;
+import org.freedesktop.wayland.raw.LibWayland;
 
 import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
@@ -47,7 +48,7 @@ public class ShmBuffer {
                      final int height,
                      final int stride,
                      final int format) {
-        this(C.wl_shm_buffer_create(client.pointer,
+        this(LibWayland.wl_shm_buffer_create(client.pointer,
                 id,
                 width,
                 height,
@@ -60,7 +61,7 @@ public class ShmBuffer {
     }
 
     public static ShmBuffer get(final Resource<?> resource) {
-        final MemorySegment wlShmBuffer = C.wl_shm_buffer_get(resource.wlResourcePtr);
+        final MemorySegment wlShmBuffer = LibWayland.wl_shm_buffer_get(resource.wlResourcePtr);
 
         final ShmBuffer buffer;
         if (MemorySegment.NULL.equals(wlShmBuffer)) {
@@ -105,7 +106,7 @@ public class ShmBuffer {
      * buffer from multiple threads.
      */
     public void beginAccess() {
-        C.wl_shm_buffer_begin_access(this.pointer);
+        LibWayland.wl_shm_buffer_begin_access(this.pointer);
     }
 
     /**
@@ -117,7 +118,7 @@ public class ShmBuffer {
      * given buffer will be sent an error.
      */
     public void endAccess() {
-        C.wl_shm_buffer_end_access(this.pointer);
+        LibWayland.wl_shm_buffer_end_access(this.pointer);
     }
 
     /**
@@ -136,24 +137,24 @@ public class ShmBuffer {
      * @return a direct ByteBuffer.
      */
     public ByteBuffer getData() {
-        MemorySegment data = C.wl_shm_buffer_get_data(this.pointer);
+        MemorySegment data = LibWayland.wl_shm_buffer_get_data(this.pointer);
         return data.asByteBuffer();
     }
 
     public int getHeight() {
-        return C.wl_shm_buffer_get_height(this.pointer);
+        return LibWayland.wl_shm_buffer_get_height(this.pointer);
     }
 
     public int getStride() {
-        return C.wl_shm_buffer_get_stride(this.pointer);
+        return LibWayland.wl_shm_buffer_get_stride(this.pointer);
     }
 
     public int getFormat() {
-        return C.wl_shm_buffer_get_format(this.pointer);
+        return LibWayland.wl_shm_buffer_get_format(this.pointer);
     }
 
     public int getWidth() {
-        return C.wl_shm_buffer_get_width(this.pointer);
+        return LibWayland.wl_shm_buffer_get_width(this.pointer);
     }
 
     @Override

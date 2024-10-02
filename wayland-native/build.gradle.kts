@@ -68,15 +68,14 @@ fun systemIncludes(): List<String> {
 }
 
 val jextractOutput = "build/generated/sources/jextract/java/main"
-fun buildJextractArgs(): List<String> {
+
+
+
+fun jextractArgsLibC(): List<String> {
     val includes = systemIncludes().flatMap { listOf("--include-dir", it) }
-    val libraries = listOf(
-        "wayland-server",
-        "wayland-client"
-    ).flatMap { listOf("--library", it) }
     val args = arrayOf(
         "--output", jextractOutput,
-        "--target-package", "org.freedesktop.wayland",
+        "--target-package", "org.freedesktop.wayland.raw",
         "--header-class-name", "C",
     )
     val headers = listOf(
@@ -93,6 +92,22 @@ fun buildJextractArgs(): List<String> {
         "<unistd.h>",
         "<stdlib.h>",
         "<signal.h>",
+    )
+    return includes + args + headers
+}
+fun jextractArgsWayland(): List<String> {
+    val includes = systemIncludes().flatMap { listOf("--include-dir", it) }
+    val libraries = listOf(
+        "wayland-server",
+        "wayland-client"
+    ).flatMap { listOf("--library", it) }
+
+    val args = arrayOf(
+        "--output", jextractOutput,
+        "--target-package", "org.freedesktop.wayland.raw",
+        "--header-class-name", "LibWayland",
+    )
+    val headers = listOf(
         "<wayland-util.h>",
         "<wayland-server-core.h>",
         "<wayland-server-protocol.h>",
@@ -111,30 +126,34 @@ fun fmtCommandLineArgs(args: List<String>): String {
     })
 }
 
-// the meat of all this: run the jextract tool with the calculated arguments
-task<Exec>("jextract") {
-    val args = buildJextractArgs()
-    val logPath = layout.buildDirectory.file("jextract.log").get().asFile
-    layout.buildDirectory.get().asFile.mkdirs()
-    doFirst {
-        checkOS()
-        assertCliToolsExist()
+fun jextract(cwd: File, args: List<String>, logPath: File): ExecResult  {
+    val res =  exec {
+        workingDir = cwd
+        commandLine(listOf("jextract") + args)
+        standardOutput = FileOutputStream(logPath)
+        errorOutput = standardOutput
+        isIgnoreExitValue = true
     }
-    commandLine(listOf("jextract") + args)
-    standardOutput = FileOutputStream(logPath)
-    errorOutput = standardOutput
-    isIgnoreExitValue = true
-    doLast {
-        if (executionResult.get().exitValue != 0) {
-            throw GradleException(
-                "jextract execution failed. build cannot continue. the jextract command ran was:\n\n" +
-                        "    jextract ${fmtCommandLineArgs(args)}\n\n" +
-                        "This command was run from the working directory $workingDir\n" +
-                        "Logs from jextract's output can be found at $logPath\n"
-            )
-        }
+    if (res.exitValue != 0) {
+        throw GradleException(
+            "jextract execution failed. build cannot continue. the jextract command ran was:\n\n" +
+                    "    jextract ${fmtCommandLineArgs(args)}\n\n" +
+                    "This command was run from the working directory $cwd\n" +
+                    "Logs from jextract's output can be found at $logPath\n"
+        )
+    }
+    return res
+}
 
-    }
+// the meat of all this: run the jextract tool with the calculated arguments
+task("jextract") {
+    val jextractLogDir = layout.buildDirectory
+    val workingDir = layout.projectDirectory.asFile
+    layout.buildDirectory.get().asFile.mkdirs()
+    checkOS()
+    assertCliToolsExist()
+    jextract(workingDir, jextractArgsLibC(), jextractLogDir.file("jextract-libc.log").get().asFile)
+    jextract(workingDir, jextractArgsWayland(), jextractLogDir.file("jextract-libwayland.log").get().asFile)
 }
 
 // ensure the jextract generated files are added to the classpath
