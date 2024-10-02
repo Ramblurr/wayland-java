@@ -78,7 +78,8 @@ public class Display {
     }
 
     /**
-     * Add a socket to Wayland display for the clients to connect. </p> This adds a Unix socket to Wayland display which
+     * Add a socket to Wayland display for the clients to connect.
+     * <p> This adds a Unix socket to Wayland display which
      * can be used by clients to connect to Wayland display. <p> If NULL is passed as name, then it would look for
      * WAYLAND_DISPLAY env variable for the socket name. If WAYLAND_DISPLAY is not set, then default wayland-0 is used.
      * <p> The Unix socket will be created in the directory pointed to by environment variable XDG_RUNTIME_DIR. If
@@ -185,7 +186,7 @@ public class Display {
 
     /**
      * Destroy Wayland display object.
-     * <p/>
+     * <p>
      * This function emits the wl_display destroy signal, releases all the sockets added to this display, free's all the
      * globals associated with this display, free's memory of additional shared memory formats and destroy the display
      * object.

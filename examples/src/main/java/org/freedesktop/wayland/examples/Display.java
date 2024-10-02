@@ -20,6 +20,7 @@ package org.freedesktop.wayland.examples;
 import org.freedesktop.wayland.client.*;
 import org.freedesktop.wayland.shared.WlSeatCapability;
 import org.freedesktop.wayland.util.EnumUtil;
+import org.freedesktop.wayland.util.WlArray;
 
 import javax.annotation.Nonnull;
 import java.util.EnumSet;
@@ -147,15 +148,46 @@ public class Display {
                     new WlSeatEventsV3() {
                         @Override
                         public void capabilities(final WlSeatProxy emitter, final int capabilities) {
-                            EnumSet<WlSeatCapability> decode = EnumUtil.decode(WlSeatCapability.class, capabilities);
-                            for (WlSeatCapability capability : decode) {
-                                System.out.println("got seat capability: " + capability);
+                            EnumSet<WlSeatCapability> caps = EnumUtil.decode(WlSeatCapability.class, capabilities);
+                            if(caps.contains(WlSeatCapability.KEYBOARD)) {
+                                emitter.getKeyboard(new WlKeyboardEventsV9() {
+                                    @Override
+                                    public void keymap(WlKeyboardProxy emitter, int format, int fd, int size) {
+
+                                    }
+
+                                    @Override
+                                    public void enter(WlKeyboardProxy emitter, int serial, @Nonnull WlSurfaceProxy surface, @Nonnull WlArray keys) {
+
+                                    }
+
+                                    @Override
+                                    public void leave(WlKeyboardProxy emitter, int serial, @Nonnull WlSurfaceProxy surface) {
+
+                                    }
+
+                                    @Override
+                                    public void key(WlKeyboardProxy emitter, int serial, int time, int key, int state) {
+                                        System.out.println("key pressed " + key + " state " + state);
+
+                                    }
+
+                                    @Override
+                                    public void modifiers(WlKeyboardProxy emitter, int serial, int modsDepressed, int modsLatched, int modsLocked, int group) {
+
+                                    }
+
+                                    @Override
+                                    public void repeatInfo(WlKeyboardProxy emitter, int rate, int delay) {
+
+                                    }
+                                });
+
                             }
                         }
 
                         @Override
-                        public void name(final WlSeatProxy emitter,
-                                         @Nonnull final String name) {
+                        public void name(final WlSeatProxy emitter, @Nonnull final String name) {
                             System.out.println("Got seat with name " + name);
                         }
                     });

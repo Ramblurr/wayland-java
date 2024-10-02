@@ -35,7 +35,7 @@ public class Client {
 
     /**
      * Create a client for the given file descriptor
-     * <p/>
+     * <p>
      * Given a file descriptor corresponding to one end of a socket, this
      * function will create a {@link Client} and add the new client to
      * the compositors client list.  At that point, the client is
@@ -43,11 +43,11 @@ public class Client {
      * servers listening socket.  When the client eventually sends
      * requests to the compositor, the {@link Client} argument to the request
      * handler will be the client returned from this function.
-     * <p/>
+     * <p>
      * The other end of the socket can be passed to
-     * {@link WlDisplayProxy#connectToFd(int)} on the client side or used with the
+     * {link WlDisplayProxy#connectToFd(int)} on the client side or used with the
      * WAYLAND_SOCKET environment variable on the client side.
-     * <p/>
+     * <p>
      * On failure this function sets errno accordingly and returns NULL.
      *
      * @param display The display object
@@ -65,7 +65,7 @@ public class Client {
 
     /**
      * Flush pending events to the client,
-     * <p/>
+     * <p>
      * Events sent to clients are queued in a buffer and written to the
      * socket later - typically when the compositor has handled all
      * requests and goes back to block in the event loop.  This function
@@ -85,7 +85,7 @@ public class Client {
 
     /**
      * Get the display object for the given client
-     * <p/>
+     * <p>
      *
      * @return The display object the client is associated with.
      */
@@ -106,11 +106,11 @@ public class Client {
 
     /**
      * Return Unix credentials for the client
-     * <p/>
+     * <p>
      * This function returns the process ID, the user ID and the group ID
      * for the given client.  The credentials come from getsockopt() with
      * SO_PEERCRED, on the client socket fd.
-     * <p/>
+     * <p>
      * Be aware that for clients that a compositor forks and execs and
      * then connects using socketpair(), this function will return the
      * credentials for the compositor.  The credentials for the socketpair

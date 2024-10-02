@@ -31,7 +31,6 @@ class ClientTest {
     private int a = 0;
     private int b = 0;
 
-
     @Test
     public void client_destroy_listener() throws IOException, NoSuchFieldException, IllegalAccessException {
         AFUNIXSocketPair<AFUNIXSocketChannel> pair = AFUNIXSocketPair.open();

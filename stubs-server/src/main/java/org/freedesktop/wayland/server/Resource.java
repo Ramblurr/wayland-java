@@ -138,7 +138,7 @@ public abstract class Resource<I> implements WaylandObject {
      * 'opcode' is the event number generated from the protocol XML
      * description (the event name). The variable arguments are the event
      * parameters, in the order they appear in the protocol XML specification.
-     * <p/>
+     * <p>
      * The variable arguments' types are:
      * <ul>
      * <li>type=uint: uint32_t</li>

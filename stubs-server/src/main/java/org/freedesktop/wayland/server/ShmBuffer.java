@@ -29,7 +29,7 @@ public class ShmBuffer {
 
     /**
      * Create a new underlying WlBufferResource with the constructed ShmBuffer as it's implementation.
-     * <p/>
+     * <p>
      * {@code ShmBuffer} should never be stored in a compositor instead it should always be queried from a
      * {@code WlBufferResource}. Listening for the resource's destruction can be done when the buffer
      * resource is attached to a surface.
@@ -73,7 +73,7 @@ public class ShmBuffer {
 
     /**
      * Mark that the given SHM buffer is about to be accessed
-     * <p/>
+     * <p>
      * An SHM buffer is a memory-mapped file given by the client.
      * According to POSIX, reading from a memory-mapped region that
      * extends off the end of the file will cause a SIGBUS signal to be
@@ -84,19 +84,19 @@ public class ShmBuffer {
      * reading from the memory and call {@link #endAccess()}
      * afterwards. This will install a signal handler for SIGBUS which
      * will prevent the compositor from crashing.
-     * <p/>
+     * <p>
      * After calling this function the signal handler will remain
      * installed for the lifetime of the compositor process. Note that
      * this function will not work properly if the compositor is also
      * installing its own handler for SIGBUS.
-     * <p/>
+     * <p>
      * If a SIGBUS signal is received for an address within the range of
      * the SHM pool of the given buffer then the client will be sent an
      * error event when {@link #endAccess()} is called. If the signal
      * is for an address outside that range then the signal handler will
      * reraise the signal which would will likely cause the compositor to
      * terminate.
-     * <p/>
+     * <p>
      * It is safe to nest calls to these functions as long as the nested
      * calls are all accessing the same buffer. The number of calls to
      * wl_shm_buffer_end_access must match the number of calls to
@@ -110,7 +110,7 @@ public class ShmBuffer {
 
     /**
      * Ends the access to a buffer started by {@link #beginAccess()}.
-     * <p/>
+     * <p>
      * This should be called after {@link #beginAccess()} once the
      * buffer is no longer being accessed. If a SIGBUS signal was
      * generated in-between these two calls then the resource for the
@@ -121,11 +121,11 @@ public class ShmBuffer {
     }
 
     /**
-     * /** Get a pointer to the memory for the SHM buffer
-     * <p/>
+     * Get a pointer to the memory for the SHM buffer
+     * <p>
      * Returns a pointer which can be used to read the data contained in
      * the given SHM buffer.
-     * <p
+     * <p>
      * As this buffer is memory-mapped, reading it from may generate
      * SIGBUS signals. This can happen if the client claims that the
      * buffer is larger than it is or if something truncates the
