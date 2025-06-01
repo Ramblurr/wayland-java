@@ -3,27 +3,39 @@ package org.freedesktop.wayland.generator.impl;
 import org.freedesktop.wayland.generator.api.WaylandCustomProtocol;
 import org.freedesktop.wayland.generator.api.WaylandProtocols;
 
+import javax.annotation.Nullable;
 import java.io.*;
 import java.nio.file.Path;
 import java.util.*;
 
 public class ProtocolXmlPathResolver {
 
-    public static List<File> resolvePaths(WaylandProtocols protocol) {
-        var maybeDataDir = pkgConfigDataDir(protocol.pkgConfig());
-        if (maybeDataDir.isEmpty())
-            return List.of();
+    private static Path requireNonNullProtocolRoot(@Nullable Path protocolRoot) {
+        if (protocolRoot == null)
+            throw new NullPointerException("Please provide the wayland.scanner.protocol.root option to the annotation processor to use paths without a pkg-config");
+        return protocolRoot;
+    }
 
-        var dataDir = maybeDataDir.get();
+    public static List<File> resolvePaths(WaylandProtocols protocol, @Nullable Path protocolRoot) {
+        Path dataDir;
+        if (protocol.pkgConfig().isEmpty()) {
+            dataDir = requireNonNullProtocolRoot(protocolRoot).resolve(protocol.path());
+        } else {
+            var maybeDataDir = pkgConfigDataDir(protocol.pkgConfig());
+            if (maybeDataDir.isEmpty())
+                return List.of();
+            dataDir = Path.of(maybeDataDir.get());
+        }
+
         List<File> result = new LinkedList<>();
         if (protocol.withStable()) {
-            result.addAll(resolveNestedPaths(Path.of(dataDir, "stable")));
+            result.addAll(resolveNestedPaths(dataDir.resolve("stable")));
         }
         if (protocol.withStaging()) {
-            result.addAll(resolveNestedPaths(Path.of(dataDir, "staging")));
+            result.addAll(resolveNestedPaths(dataDir.resolve("staging")));
         }
         if (protocol.withUnstable()) {
-            result.addAll(resolveNestedPaths(Path.of(dataDir, "unstable")));
+            result.addAll(resolveNestedPaths(dataDir.resolve("unstable")));
         }
         return result;
     }
@@ -47,21 +59,20 @@ public class ProtocolXmlPathResolver {
         return results;
     }
 
-    public static File resolvePath(WaylandCustomProtocol protocol) {
+    public static File resolvePath(WaylandCustomProtocol protocol, @Nullable Path protocolRoot) {
         System.out.println(String.format("resolving protocol annotation %s", protocol));
-        var path = new File(protocol.path());
-        if (path.exists() && path.canRead()) {
-            return path;
-        }
-
-        if (!Objects.equals(protocol.pkgConfig(), "")) {
+        File path = null;
+        if (Objects.equals(protocol.pkgConfig(), "")) {
+            path = requireNonNullProtocolRoot(protocolRoot).resolve(protocol.path()).toFile();
+        } else {
             var maybePath = resolveFromPkgConfig(protocol.path(), protocol.pkgConfig());
             if (maybePath.isPresent()) {
                 path = maybePath.get();
-                if (path.exists() && path.canRead()) {
-                    return path;
-                }
             }
+        }
+
+        if (path != null && path.isFile() && path.canRead()) {
+            return path;
         }
 
         throw new RuntimeException(String.format("Cannot locate protocol xml for path=%s pkgConfig=%s, pkgConfigDataDirOutput=", protocol.path(), protocol.pkgConfig(),

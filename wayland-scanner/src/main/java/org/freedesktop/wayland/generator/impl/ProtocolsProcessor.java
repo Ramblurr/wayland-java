@@ -17,12 +17,14 @@ import org.freedesktop.wayland.generator.api.WaylandCustomProtocol;
 import org.freedesktop.wayland.generator.api.WaylandCustomProtocols;
 import org.freedesktop.wayland.generator.api.WaylandProtocols;
 
+import javax.annotation.Nullable;
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
+import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -34,15 +36,21 @@ import java.util.Set;
         }
 )
 @SupportedSourceVersion(SourceVersion.RELEASE_22)
+@SupportedOptions({"wayland.scanner.protocol.root"})
 public class ProtocolsProcessor extends AbstractProcessor {
 
     public static Set<ProtocolGenConfig> gatherProtocols(ProcessingEnvironment penv, final RoundEnvironment roundEnv) {
         Set<ProtocolGenConfig> ret = new LinkedHashSet<>();
 
+
+        String declaredProtocolRoot = penv.getOptions().get("wayland.scanner.protocol.root");
+
+        @Nullable Path protocolRoot = declaredProtocolRoot != null ? Path.of(declaredProtocolRoot) : null;
+
         // gather @WaylandProtocols
         for (final Element elem : roundEnv.getElementsAnnotatedWith(WaylandProtocols.class)) {
             final WaylandProtocols protocol = elem.getAnnotation(WaylandProtocols.class);
-            var paths = ProtocolXmlPathResolver.resolvePaths(protocol);
+            var paths = ProtocolXmlPathResolver.resolvePaths(protocol, protocolRoot);
             if (paths.isEmpty()) {
                 penv.getMessager().printError("wayland-scanner could not resolve any protocol xml files", elem);
                 continue;
@@ -62,7 +70,7 @@ public class ProtocolsProcessor extends AbstractProcessor {
                 ret.add(new ProtocolGenConfig(
                         protocol,
                         elem, getPackage(elem),
-                        ProtocolXmlPathResolver.resolvePath(protocol)
+                        ProtocolXmlPathResolver.resolvePath(protocol, protocolRoot)
                 ));
             }
         }

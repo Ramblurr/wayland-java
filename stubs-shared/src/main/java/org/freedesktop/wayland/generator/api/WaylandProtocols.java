@@ -53,7 +53,8 @@ public @interface WaylandProtocols {
 
     /**
      * Specifies a custom path to the directory containing the protocol XML files.
-     * If not set, the default path will be used as determined by pkg-config.
+     * Can be set to a path relative to the path resolved by pkg-config, an absolute path,
+     * or a path relative to the {@code wayland.scanner.protocol.root} option.
      *
      * @return the custom path to the protocols directory
      */
