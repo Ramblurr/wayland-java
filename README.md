@@ -57,6 +57,7 @@ The [wayland-protocols][artifact-protocols] artifact, as described above, contai
     * [![org.freedesktop.wayland:wayland-stubs-server:XXX](https://maven-badges.herokuapp.com/maven-central/org.freedesktop.wayland/wayland-stubs-server/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.freedesktop.wayland/wayland-stubs-server)
 3. Add the appropriate `@Wayland*Protocols` annotation to your own private `package-info.java` file and configure the parameters. (see next section for more information)
 4. Ensure your build tool is configured to run annotation processors.
+   * If you want to use a protocol at a relative path without using pkg-config, specify `-Awayland.scanner.protocol.root` as the root used for relative file lookups.
 5. Build your project.
 
 ### Which `@Wayland*Protocol` annotation?
@@ -73,7 +74,7 @@ There are two annotations you can use to generate protocol bindings.
              @WaylandCustomProtocol(path = "foo.xml", pkgConfig = "wayland-foo"),
              // load the foobar.xml protocol from an absolute path
              @WaylandCustomProtocol(path = "/my/path/to/foo.xml"),
-             // load the foobar.xml protocol relative to the project directory
+             // load the foobar.xml protocol relative to the protocol root
              @WaylandCustomProtocol(path = "fixtures/foo.xml"),
     })
      package my.domain.wayland;

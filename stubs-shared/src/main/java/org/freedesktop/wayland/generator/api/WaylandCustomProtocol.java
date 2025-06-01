@@ -51,7 +51,7 @@ public @interface WaylandCustomProtocol {
 
     /**
      * Specifies the path to the Wayland protocol XML file.
-     * This can be an absolute path, a path relative to the project directory,
+     * This can be an absolute path, a path relative to the {@code wayland.scanner.protocol.root} option,
      * or a filename to be resolved relative to the pkgConfig setting.
      *
      * @return the path to the protocol XML file
